@@ -3,8 +3,8 @@ import datetime
 import sys
 from pathlib import Path
 import threading
-
 import json
+
 __all__ = [
     "Logger",
 ]
@@ -40,7 +40,8 @@ class Logger:
     def __init__(
         self, output_dir: str = "logs",
         log_file_type: str = "log",
-        settings_path: str = './log_settings.json'
+        settings_path: str = './log_settings.json',
+        LogLevel: str = 'INFO'
     ):
         """
         Args:
@@ -55,31 +56,43 @@ class Logger:
             PathNoneExistant: If the log settings file path does not exist.
             UnableToLock: If the script is unable to get a thread lock.
         """
+        # get thread lock
         self.lock = None
         try:
             self.lock = threading.Lock()
         except Exception as e:
             raise Errors.UnableToLock(f"Unable to get process lock with error {e}")
-
+        
+        self.loglevel = LogLevel.upper()
+        
+        #initialise variables
         self.settings = None
         self.file_path = None
+        self.log_file = None
+        self.log_file_name = None
+        self.timestamp =  None
+        
+        # assign values
         self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.supported_formats = ["log", "txt"]
         
+        
+        #check format type
         if log_file_type in self.supported_formats:
             self.log_file_type = log_file_type
         else:
             raise ValueError("Log file type isn't supported")
-
+        
+        # check for the output files
         if output_dir == ".":
             self.file_path = Path.cwd().resolve()
         else:
             self.file_path = Path(output_dir).resolve()
 
-        self.log_file = None
+        # create the log file
         self.create_log_file()
-        self.log_file_name = None
         
+        #check the settings path
         self.settings_path = settings_path
         if self.settings_path == './log_settings.json':
             with open(self.settings_path, 'r') as f:
@@ -102,13 +115,17 @@ class Logger:
         """
         return " ".join(map(str, args))  # format the arguments into a string with spaces in between
 
-    def log(self, level: str, message: str):
+    def log(
+    self,
+    level: str,
+    message: str,
+    context=None
+    ):
         """
         Args:
-            level: LogLevel:
-                  The severity of the log based on the LogLevel enum.
-            message: str:
-                   The content of the log message.
+            level (str): The log level.
+            message (str): The log message.
+            context (dict, optional): Contextual information to be included in the log message. Defaults to None.
 
         Summary:
             Make a new log to the log file.
@@ -116,25 +133,38 @@ class Logger:
         Raises:
             FileNotOpen: If log file is not open.
             UnableToLock: If the script cant acquire a thread lock
-
         """
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")  # get the timestamp
         message = self.format(message)  # format the args
-        level = level.upper() # make the level upper case if it isnt
+        level = level.upper()  # make the level upper case if it isn't
+
         if self.lock:
             with self.lock:
-                if self.log_file: # if the log file exists
-                    if self.settings: # if the self.settings variable is not none 
-                        if level in self.settings['LogLevels']: #check if the level is in the configured levels
-                            self.log_file.write(
-                                f"[{timestamp}] [{level}] {message}" + "\n"
-                            )  # write the formatted message to the log file
+                if self.log_file:  # if the log file exists
+                    if self.settings:  # if the self.settings variable is not None
+                        log_level_value = self.settings['LogLevels'].get(level)
+                        configured_level_value = self.settings['LogLevels'].get(self.loglevel)
+                        if log_level_value is not None and configured_level_value is not None:
+                            if log_level_value >= configured_level_value:
+                                if not context:
+                                    self.log_file.write(
+                                        f"[{timestamp}] [{level}] {message}\n"
+                                    )  # write the formatted message to the log file
+                                else:
+                                    self.log_file.write(
+                                        f"[{timestamp}] [{level}] {message} [{context}]\n"
+                                    )  # add the context
+                            else:
+                                # Log level is lower than configured level, do nothing
+                                pass
                         else:
-                            raise Errors.LevelNotSupported(f'{level} is not a member of your Levels')
+                            raise Errors.LevelNotSupported(f"{level} is not a valid log level")
+                    
                 else:
                     raise Errors.FileNotOpen("Log file is not open")  # raise FileNotOpen if file is not open
         else:
             raise Errors.UnableToLock("Self.lock is None or false for some reason")
+
 
     def create_log_file(self):
         """
