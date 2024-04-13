@@ -34,8 +34,8 @@ class Errors:
 
 
 class Logger:
-
-    open_loggers = {}  # initialise the open loggers var
+    open_loggers_lock = threading.Lock()  # Lock for synchronizing access to open_loggers
+    open_loggers = {}  # Thread-safe dictionary to store open loggers
 
     def __init__(
         self, output_dir: str = "logs",
@@ -55,36 +55,39 @@ class Logger:
             PathNoneExistant: If the log settings file path does not exist.
             UnableToLock: If the script is unable to get a thread lock.
         """
-        self.lock = None # initialise the lock variable
+        self.lock = None
         try:
-            self.lock = threading.Lock() # grab the lock
+            self.lock = threading.Lock()
         except Exception as e:
-            raise Errors.UnableToLock(f"Unable to get process lock with error {e}")# raise error if the script cant get error
-        self.settings = None # initiallise 
-        self.file_path = None  # initially set the file path to None
-        self.timestamp: str = str(datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S"))  # set the start timestamp
-        self.supported_formats = ["log", "txt"]  # log formats
-        if log_file_type in self.supported_formats:  # check if the format is supported
-            pass
-        else:
-            raise ValueError("Log file type isnt supported")  # raise value error
-        self.log_file_type = log_file_type
-        if output_dir == ".":  # check if the output dir isnt the base dir
-            self.file_path = Path.cwd().resolve()  # set it to the absolute path
-        else:
-            self.file_path = Path(output_dir).resolve()  # set the log file path
-        self.log_file = None  # initialise the log file
-        self.create_log_file()  # create the log file when activating the class
-        self.log_file_name = None # initialise the log file name
+            raise Errors.UnableToLock(f"Unable to get process lock with error {e}")
+
+        self.settings = None
+        self.file_path = None
+        self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        self.supported_formats = ["log", "txt"]
         
-        self.settings_path = settings_path # set the settings path variable
-        if self.settings_path == './log_settings.json': # if the path is the default then proceed
+        if log_file_type in self.supported_formats:
+            self.log_file_type = log_file_type
+        else:
+            raise ValueError("Log file type isn't supported")
+
+        if output_dir == ".":
+            self.file_path = Path.cwd().resolve()
+        else:
+            self.file_path = Path(output_dir).resolve()
+
+        self.log_file = None
+        self.create_log_file()
+        self.log_file_name = None
+        
+        self.settings_path = settings_path
+        if self.settings_path == './log_settings.json':
             with open(self.settings_path, 'r') as f:
-                self.settings = json.load(f) # load the settings
-        else: # else check if the path exists and then open it if it does not exist raise PathNonExistant
+                self.settings = json.load(f)
+        else:
             if Path(self.settings_path).resolve():
                 with open(self.settings_path, 'r') as f:
-                    self.settings = json.load(f) # load the settingss   
+                    self.settings = json.load(f)
             else:
                 raise Errors.PathNonExistant('File path does not exist')
             
@@ -117,12 +120,12 @@ class Logger:
         """
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H-%M-%S")  # get the timestamp
         message = self.format(message)  # format the args
-        level = level.upper()
+        level = level.upper() # make the level upper case if it isnt
         if self.lock:
             with self.lock:
-                if self.log_file:
-                    if self.settings:
-                        if level in self.settings['LogLevels']:
+                if self.log_file: # if the log file exists
+                    if self.settings: # if the self.settings variable is not none 
+                        if level in self.settings['LogLevels']: #check if the level is in the configured levels
                             self.log_file.write(
                                 f"[{timestamp}] [{level}] {message}" + "\n"
                             )  # write the formatted message to the log file
