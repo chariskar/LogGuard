@@ -177,11 +177,16 @@ class Logger:
         Close the current Log file.
 
         Raises:
-            FileNotOpen: if file is not open
+            FileNotOpen: if file is not open.
         """
-        if self.log_file:  # check if the file exists
-            self.log('info', "Closing file")  # add a closing message
-            self.log_file.close()  # close the file
-            self.log_file = None  # set the file to none
+        if self.log_file:
+            try:
+                self.log('info', "Closing file")
+            finally:
+                self.log_file.close()
+                with self.open_loggers_lock:
+                    if self.log_file_name in self.open_loggers:
+                        del self.open_loggers[self.log_file_name]
+                self.log_file = None
         else:
-            raise Errors.FileNotOpen("Log file is not open")  # raise FileNotOpen error if file is not open
+            raise Errors.FileNotOpen("Log file is not open")
