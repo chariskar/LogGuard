@@ -7,7 +7,7 @@
         "CRITICAL": 5
     },
     "Formats":{
-        "NonContext": "[{timestamp}] [{level}] {message}",
-        "Context":"[{timestamp}] [{level}] {message}"
+        "NonContext": "[{timestamp}] [{level}] {message}  ",
+        "Context":"[{timestamp}] [{level}] {message} {context}"
     }
 }

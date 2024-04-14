@@ -158,16 +158,16 @@ class Logger:
                                 if timestamp:
                                     # write the formatted message to the log file
                                     if context:
-                                        self.log_file.write(
-                                            self.Formater(level,message,timestamp,True)
-                                        )
+                                        formatted_message = self.Formater(level, message, timestamp, True, context=context)
+                                    if formatted_message is not None:
+                                        self.log_file.write(formatted_message)
                                         self.log_file.flush()
-                                        
-                                    else:
-                                        self.log_file.write(
-                                            self.Formater(level,message,timestamp,False)
-                                        )
+                                else:
+                                    formatted_message = self.Formater(level, message, str(timestamp),False)
+                                    if formatted_message is not None:
+                                        self.log_file.write(formatted_message)
                                         self.log_file.flush()
+
                                         
                             else:
                                 # Log level is lower than configured level, do nothing
@@ -181,13 +181,19 @@ class Logger:
 
 
 
-    def Formater(self, level: str, message: str, timestamp: str, context: bool = False):
+    def Formater(self, level: str, message: str, timestamp: str, context_value: bool = False,context = None):
         if self.settings:
-            format_template = self.settings['Formats']['Context'] if context else self.settings['Formats']['NonContext']
-            formatted_message = format_template.format(level=level, message=message, timestamp=timestamp)
-            return formatted_message + "\n"
+            if context_value:
+                if context:
+                    format_template = self.settings['Formats']['Context']
+                    formatted_message = format_template.format(level=level, message=message, timestamp=timestamp,context=context)
+                    return formatted_message + "\n"
+            else:
+                format_template = self.settings['Formats']['NonContext']
+                formatted_message = format_template.format(level=level, message=message, timestamp=timestamp,)
+                return formatted_message + "\n"
         else:
-            raise ValueError("Settings are not available for formatting")
+            raise Errors.FileNotOpen('Settings file is not open')
 
     def create_log_file(self):
         """
