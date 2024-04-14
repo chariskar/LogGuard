@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 import threading
 import json
-
+# TODO: Write documentation
 __all__ = [
     "Logger",
 ]
@@ -29,6 +29,9 @@ class Errors:
 
     class UnableToLock(Exception):
         """UnableToLock Error"""
+        
+    class LockNonExistant(Exception):
+        """LockNonExistant Error"""
 
 
 class Logger:
@@ -91,23 +94,27 @@ class Logger:
             # Raise an error if log file type is not supported
             raise ValueError("Log file type isn't supported")
 
-        # Check for the output directory
-        if output_dir == ".":
-            # If output directory is current directory, set file path to current working directory
-            self.file_path = Path.cwd().resolve()
-        else:
-            # Otherwise, set file path to specified directory
-            self.file_path = Path(output_dir).resolve()
+        if self.lock:
+                with self.lock:
+                    # Check for the output directory
+                    if output_dir == ".":
+                        # If output directory is current directory, set file path to current working directory
+                        
+                        self.file_path = Path.cwd().resolve()
+                    else:
+                        # Otherwise, set file path to specified directory
+                        self.file_path = Path(output_dir).resolve()
 
         # Check the settings file path
         self.settings_path = settings_path
 
         try:
-
-            # Attempt to open the settings file
-            with open(self.settings_path) as f:
-                # Load settings from the file
-                self.settings = json.load(f)
+            if self.lock:
+                with self.lock:
+                    # Attempt to open the settings file
+                    with open(self.settings_path) as f:
+                        # Load settings from the file
+                        self.settings = json.load(f)
         except FileNotFoundError:
             # Raise an error if settings file path does not exist
             raise Errors.PathNonExistant('File path does not exist')
@@ -130,7 +137,7 @@ class Logger:
 
         Raises:
             FileNotOpen: If log file is not open.
-            UnableToLock: If the script cant acquire a thread lock.
+            LockNonExistant: If the script doesnt have a lock.
             FileNotOpen: If the log file is not open.
             
         """
@@ -175,7 +182,7 @@ class Logger:
                 else:
                     raise Errors.FileNotOpen('Log file is not open')
         else:
-            raise Errors.UnableToLock("Self.lock is None or false for some reason")
+            raise Errors.LockNonExistant("Self.lock is None or false for some reason contact dev ")
 
     def Formatter(self, level: str, message: str, timestamp: str, context_value: bool = False, context: object = None):
         """
@@ -194,8 +201,11 @@ class Logger:
             if context_value:
                 if context:
                     format_template = self.settings['Formats']['Context']
-                    formatted_message = format_template.format(level=level, message=message, timestamp=timestamp,
-                                                               context=context)
+                    formatted_message = format_template.format(
+                                                                level=level,
+                                                                message=message,
+                                                                timestamp=timestamp,
+                                                                context=context)
                     return formatted_message + "\n"
             else:
                 format_template = self.settings['Formats']['NonContext']
@@ -252,6 +262,7 @@ class Logger:
 
         Raises:
             FileNotOpen: if file is not open.
+            LockNonExistant: If the script doesnt have a lock.
         """
         if self.log_file:
 
@@ -260,15 +271,18 @@ class Logger:
                 self.log('info', "Closing file")
 
             finally:
+                if self.lock:
+                    with self.lock:
+                        self.log_file.close()
 
-                self.log_file.close()
+                        with self.open_loggers_lock:
 
-                with self.open_loggers_lock:
+                            if self.log_file_name in self.open_loggers:
+                                del self.open_loggers[self.log_file_name]
 
-                    if self.log_file_name in self.open_loggers:
-                        del self.open_loggers[self.log_file_name]
-
-                self.log_file = None
+                        self.log_file = None
+                else:
+                    Errors.LockNonExistant('Threadding lock is none or False for some reason contact dev')
         else:
 
             raise Errors.FileNotOpen("Log file is not open")
