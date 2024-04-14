@@ -159,14 +159,16 @@ class Logger:
                                     # write the formatted message to the log file
                                     if context:
                                         formatted_message = self.Formater(level, message, timestamp, True, context=context)
-                                    if formatted_message is not None:
-                                        self.log_file.write(formatted_message)
-                                        self.log_file.flush()
-                                else:
-                                    formatted_message = self.Formater(level, message, str(timestamp),False)
-                                    if formatted_message is not None:
-                                        self.log_file.write(formatted_message)
-                                        self.log_file.flush()
+                                        
+                                        if formatted_message is not None:
+                                            self.log_file.write(formatted_message)
+                                            self.log_file.flush()
+                                            
+                                    else:
+                                        formatted_message = self.Formater(level, message, str(timestamp),False)
+                                        if formatted_message is not None:
+                                            self.log_file.write(formatted_message)
+                                            self.log_file.flush()
 
                                         
                             else:
