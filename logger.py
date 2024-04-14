@@ -135,7 +135,9 @@ class Logger:
 
         Raises:
             FileNotOpen: If log file is not open.
-            UnableToLock: If the script cant acquire a thread lock
+            UnableToLock: If the script cant acquire a thread lock.
+            FileNotOpen: If the log file is not open.
+            
         """
         timestamp = self.timestamp  # get the timestamp from the instance variable
 
