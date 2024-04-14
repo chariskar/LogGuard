@@ -182,6 +182,18 @@ class Logger:
 
 
     def Formater(self, level: str, message: str, timestamp: str, context_value: bool = False,context = None):
+        """
+            Args:
+                level(str,required):The level.
+                message(str,required):The message.
+                timestamp(str,required): The timestamp.
+                context_value(bool,optional): If the logger should use the context Format.
+                context(dict,optional): The context to add .
+            Returns:
+                Formatted message.
+            Raises:
+                FileNotOpen: If the settings file is not open.
+        """
         if self.settings:
             if context_value:
                 if context:
