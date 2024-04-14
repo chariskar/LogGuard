@@ -153,15 +153,15 @@ class Logger:
                                 if timestamp:
                                     # write the formatted message to the log file
                                     if context:
-                                        formatted_message = self.Formater(level, message, timestamp, True,
-                                                                          context=context)
+                                        formatted_message = self.Formatter(level, message, timestamp, True,
+                                                                           context=context)
 
                                         if formatted_message is not None:
                                             self.log_file.write(formatted_message)
                                             self.log_file.flush()
 
                                     else:
-                                        formatted_message = self.Formater(level, message, str(timestamp))
+                                        formatted_message = self.Formatter(level, message, str(timestamp))
                                         if formatted_message is not None:
                                             self.log_file.write(formatted_message)
                                             self.log_file.flush()
@@ -177,7 +177,7 @@ class Logger:
         else:
             raise Errors.UnableToLock("Self.lock is None or false for some reason")
 
-    def Formater(self, level: str, message: str, timestamp: str, context_value: bool = False, context=None):
+    def Formatter(self, level: str, message: str, timestamp: str, context_value: bool = False, context: object = None):
         """
             Args:
                 level(str,required):The level.
