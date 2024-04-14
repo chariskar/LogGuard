@@ -139,7 +139,7 @@ class Logger:
             FileNotOpen: If the log file is not open.
             
         """
-        timestamp = self.timestamp  # get the timestamp from the instance variable
+        timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
 
         level = level.upper()  # make the level upper case if it isn't
         if self.lock:
