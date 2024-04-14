@@ -9,28 +9,26 @@ __all__ = [
     "Logger",
 ]
 
+
 class Errors:
     """Contains Custom Errors"""
-    
+
     class FileNotOpen(Exception):
         """FileNotOpen Error"""
 
         pass
-
 
     class PathNonExistant(Exception):
         """PathNoneExistant Error"""
 
         pass
 
-    
     class LevelNotSupported(Exception):
         """LevelNotSupported Error"""
         pass
 
     class UnableToLock(Exception):
         """UnableToLock Error"""
-    
 
 
 class Logger:
@@ -38,10 +36,10 @@ class Logger:
     open_loggers = {}  # Thread-safe dictionary to store open loggers
 
     def __init__(
-    self, output_dir: str = "logs",
-    log_file_type: str = "log",
-    settings_path: str = './log_settings.json',
-    LogLevel: str = 'INFO'
+            self, output_dir: str = "logs",
+            log_file_type: str = "log",
+            settings_path: str = './log_settings.json',
+            LogLevel: str = 'INFO'
     ):
         """
         Args:
@@ -76,7 +74,7 @@ class Logger:
         self.file_path = None
         self.log_file = None
         self.log_file_name = None
-        self.timestamp =  None
+        self.timestamp = None
 
         # Assign values
         # Set timestamp to current date and time in the specified format
@@ -84,7 +82,6 @@ class Logger:
         # List of supported log file formats
         self.supported_formats = ["log", "txt"]
         # If settings are available, set configured log level value
-        
 
         # Check log file type
         if log_file_type in self.supported_formats:
@@ -108,20 +105,18 @@ class Logger:
         try:
 
             # Attempt to open the settings file
-            with open(self.settings_path, 'r') as f:
+            with open(self.settings_path) as f:
                 # Load settings from the file
                 self.settings = json.load(f)
         except FileNotFoundError:
             # Raise an error if settings file path does not exist
             raise Errors.PathNonExistant('File path does not exist')
-        
+
         if self.settings:
             self.configured_level_value = self.settings['LogLevels'][self.loglevel]
 
         # Create the log file
         self.create_log_file()
-
-
 
     def log(self, level: str, message: str, context=None):
         """
@@ -143,7 +138,7 @@ class Logger:
 
         level = level.upper()  # make the level upper case if it isn't
         if self.lock:
-            
+
             with self.lock:
 
                 if self.log_file:  # if the log file exists
@@ -152,25 +147,26 @@ class Logger:
 
                         log_level_value: int = self.settings['LogLevels'][level]
 
-                        if log_level_value and self.configured_level_value :
+                        if log_level_value and self.configured_level_value:
                             # check that the configured log level is lower than the given log level
                             if log_level_value >= self.configured_level_value:
                                 if timestamp:
                                     # write the formatted message to the log file
                                     if context:
-                                        formatted_message = self.Formater(level, message, timestamp, True, context=context)
-                                        
-                                        if formatted_message is not None:
-                                            self.log_file.write(formatted_message)
-                                            self.log_file.flush()
-                                            
-                                    else:
-                                        formatted_message = self.Formater(level, message, str(timestamp),False)
+                                        formatted_message = self.Formater(level, message, timestamp, True,
+                                                                          context=context)
+
                                         if formatted_message is not None:
                                             self.log_file.write(formatted_message)
                                             self.log_file.flush()
 
-                                        
+                                    else:
+                                        formatted_message = self.Formater(level, message, str(timestamp))
+                                        if formatted_message is not None:
+                                            self.log_file.write(formatted_message)
+                                            self.log_file.flush()
+
+
                             else:
                                 # Log level is lower than configured level, do nothing
                                 pass
@@ -181,9 +177,7 @@ class Logger:
         else:
             raise Errors.UnableToLock("Self.lock is None or false for some reason")
 
-
-
-    def Formater(self, level: str, message: str, timestamp: str, context_value: bool = False,context = None):
+    def Formater(self, level: str, message: str, timestamp: str, context_value: bool = False, context=None):
         """
             Args:
                 level(str,required):The level.
@@ -200,11 +194,12 @@ class Logger:
             if context_value:
                 if context:
                     format_template = self.settings['Formats']['Context']
-                    formatted_message = format_template.format(level=level, message=message, timestamp=timestamp,context=context)
+                    formatted_message = format_template.format(level=level, message=message, timestamp=timestamp,
+                                                               context=context)
                     return formatted_message + "\n"
             else:
                 format_template = self.settings['Formats']['NonContext']
-                formatted_message = format_template.format(level=level, message=message, timestamp=timestamp,)
+                formatted_message = format_template.format(level=level, message=message, timestamp=timestamp, )
                 return formatted_message + "\n"
         else:
             raise Errors.FileNotOpen('Settings file is not open')
@@ -216,24 +211,24 @@ class Logger:
             PathNonExistant: If the file path is not found
         """
         self.log_file_name = self.get_log_name()  # get the log file name
-        
+
         if self.file_path:
-            
+
             self.file_path.mkdir(parents=True, exist_ok=True)  # make the log dir if it doesn't exist
         else:
             raise Errors.PathNonExistant("File path not found")  # raise an error if file path is  None
         try:
             if self.log_file_name in Logger.open_loggers:  # check if there is an already open logger file
-                
+
                 self.log_file = Logger.open_loggers[self.log_file_name]  # open that logger file
             else:
                 self.log_file = open(str(self.log_file_name), "a")  # if there isn't an open logger file make one
-                
+
                 Logger.open_loggers[self.log_file_name] = self.log_file  # open that file
-                
+
                 self.log('info', "Starting")  # set a starting message
         except IOError:
-            
+
             sys.stderr.write(f"Error: Unable to open log file {self.log_file_name}\n")
 
     def get_log_name(self):
@@ -246,7 +241,7 @@ class Logger:
         """
         if self.file_path:
             return (
-                self.file_path / f"{self.timestamp}.{self.log_file_type}"
+                    self.file_path / f"{self.timestamp}.{self.log_file_type}"
             )  # return the filepath and the name of the file
         else:
             raise Errors.PathNonExistant("File path not found")  # raise an error if file path is  None
@@ -259,22 +254,21 @@ class Logger:
             FileNotOpen: if file is not open.
         """
         if self.log_file:
-            
+
             try:
-                
+
                 self.log('info', "Closing file")
-                
+
             finally:
-                
+
                 self.log_file.close()
-                
+
                 with self.open_loggers_lock:
-                    
+
                     if self.log_file_name in self.open_loggers:
-                        
                         del self.open_loggers[self.log_file_name]
-                        
+
                 self.log_file = None
         else:
-            
+
             raise Errors.FileNotOpen("Log file is not open")
