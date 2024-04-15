@@ -39,7 +39,8 @@ class Logger:
     open_loggers = {}  # Thread-safe dictionary to store open loggers
 
     def __init__(
-            self, output_dirs: list = ["logs"],  # Accept a list of output directories
+            self,
+            output_dirs: list = ["logs"],
             log_file_type: str = "log",
             settings_path: str = './log_settings.json',
             LogLevel: str = 'INFO'
