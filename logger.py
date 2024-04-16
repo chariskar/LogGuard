@@ -39,15 +39,14 @@ class Logger:
     open_loggers = {}  # Thread-safe dictionary to store open loggers
 
     def __init__(
-            self,
-            output_dirs: list = ["logs"],
+            self, output_dir: str = "logs",
             log_file_type: str = "log",
             settings_path: str = './log_settings.json',
             LogLevel: str = 'INFO'
     ):
         """
         Args:
-            output_dirs (list, optional): List of output locations. Defaults to ['logs'].
+            output_dir (str, optional): the output location. Defaults to 'logs'.
             log_file_type (str, optional): the file log type. Defaults to 'log'.
             settings_path (str,optional): the settings path. Defaults to './log_settings.json'.
 
@@ -75,8 +74,9 @@ class Logger:
         # Initialise variables
         self.settings = None
         self.configured_level_value = None
-        self.file_paths = []  # Store multiple file paths
-        self.log_files = {}  # Store multiple log files
+        self.file_path = None
+        self.log_file = None
+        self.log_file_name = None
         self.timestamp = None
 
         # Assign values
@@ -93,6 +93,17 @@ class Logger:
         else:
             # Raise an error if log file type is not supported
             raise ValueError("Log file type isn't supported")
+
+        if self.lock:
+                with self.lock:
+                    # Check for the output directory
+                    if output_dir == ".":
+                        # If output directory is current directory, set file path to current working directory
+                        
+                        self.file_path = Path.cwd().resolve()
+                    else:
+                        # Otherwise, set file path to specified directory
+                        self.file_path = Path(output_dir).resolve()
 
         # Check the settings file path
         self.settings_path = settings_path
@@ -111,10 +122,9 @@ class Logger:
         if self.settings:
             self.configured_level_value = self.settings['LogLevels'][self.loglevel]
 
-        # Create log files for each output directory
-        for output_dir in output_dirs:
-            self.create_log_file(output_dir)
-            
+        # Create the log file
+        self.create_log_file()
+
     def log(self, level: str, message: str, context=None):
         """
         Args:
@@ -204,32 +214,31 @@ class Logger:
         else:
             raise Errors.FileNotOpen('Settings file is not open')
 
-    def create_log_file(self, output_dir):
+    def create_log_file(self):
         """
-        Generate the log file for the specified output directory
-
-        Args:
-            output_dir (str): Output directory for the log file
+            Generate the log file
         Raises:
             PathNonExistant: If the file path is not found
         """
-        self.file_path = Path(output_dir).resolve()  # Set file path to specified directory
-
         self.log_file_name = self.get_log_name()  # get the log file name
 
         if self.file_path:
-            self.file_path.mkdir(parents=True, exist_ok=True)  # Make the log directory if it doesn't exist
-        else:
-            raise Errors.PathNonExistant("File path not found")  # Raise an error if file path is None
 
+            self.file_path.mkdir(parents=True, exist_ok=True)  # make the log dir if it doesn't exist
+        else:
+            raise Errors.PathNonExistant("File path not found")  # raise an error if file path is  None
         try:
-            if self.log_file_name in Logger.open_loggers:  # Check if there is an already open logger file
-                self.log_file = Logger.open_loggers[self.log_file_name]  # Open that logger file
+            if self.log_file_name in Logger.open_loggers:  # check if there is an already open logger file
+
+                self.log_file = Logger.open_loggers[self.log_file_name]  # open that logger file
             else:
-                self.log_file = open(str(self.log_file_name), "a")  # Create a new log file
-                Logger.open_loggers[self.log_file_name] = self.log_file  # Open that file
-                self.log('info', "Starting")  # Set a starting message
+                self.log_file = open(str(self.log_file_name), "a")  # if there isn't an open logger file make one
+
+                Logger.open_loggers[self.log_file_name] = self.log_file  # open that file
+
+                self.log('info', "Starting")  # set a starting message
         except IOError:
+
             sys.stderr.write(f"Error: Unable to open log file {self.log_file_name}\n")
 
     def get_log_name(self):
