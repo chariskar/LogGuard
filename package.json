@@ -1,0 +1,12 @@
+{
+  "name": "logger",
+  "module": "test.ts",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest",
+    "threading": "^0.0.2"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

@@ -15,9 +15,10 @@ class Errors:
 
     class FileNotOpen(Exception):
         """FileNotOpen Error"""
-
+        
+        
         pass
-
+        
     class PathNonExistant(Exception):
         """PathNoneExistant Error"""
 
@@ -30,9 +31,13 @@ class Errors:
     class UnableToLock(Exception):
         """UnableToLock Error"""
         
+        pass
+        
     class LockNonExistant(Exception):
         """LockNonExistant Error"""
 
+        
+        pass
 
 class Logger:
     open_loggers_lock = threading.Lock()  # Lock for synchronizing access to open_loggers
@@ -107,17 +112,9 @@ class Logger:
 
         # Check the settings file path
         self.settings_path = settings_path
+        
 
-        try:
-            if self.lock:
-                with self.lock:
-                    # Attempt to open the settings file
-                    with open(self.settings_path) as f:
-                        # Load settings from the file
-                        self.settings = json.load(f)
-        except FileNotFoundError:
-            # Raise an error if settings file path does not exist
-            raise Errors.PathNonExistant('File path does not exist')
+        self.load_json(self.settings_path)
 
         if self.settings:
             self.configured_level_value = self.settings['LogLevels'][self.loglevel]
@@ -255,6 +252,20 @@ class Logger:
             )  # return the filepath and the name of the file
         else:
             raise Errors.PathNonExistant("File path not found")  # raise an error if file path is  None
+        
+    def load_json(
+        self,
+        path: str
+        ):
+            if self.lock:
+                with self.lock:
+                    if Path(path).resolve():
+                        with open(path,'r') as f:
+                            return json.load(f)
+                    else:
+                        raise Errors.PathNonExistant('File path does not exist')
+            else:
+                raise Errors.LockNonExistant('Thread lock does not exist please contact dev')
 
     def close(self):
         """
@@ -281,6 +292,9 @@ class Logger:
                                 del self.open_loggers[self.log_file_name]
 
                         self.log_file = None
+                        
+                        self.lock.release()
+
                 else:
                     Errors.LockNonExistant('Threadding lock is none or False for some reason contact dev')
         else:
