@@ -1,1 +1,0 @@
-TODO: Add proper DocStrings and comments to JS and TS 

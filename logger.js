@@ -6,6 +6,14 @@ class PathNonExistant extends Error {} // PathNonExistant Error
 
 
 class Logger {
+    /**
+     * Creates an instance of the Logger class.
+     * @param {string} [output_dir='logs'] - The directory where log files will be stored.
+     * @param {string} [log_file_type='log'] - The type of log file (e.g., 'log', 'txt').
+     * @param {string} [settings_path='./log_settings.json'] - The path to the log settings file.
+     * @param {string} [LogLevel='INFO'] - The log level (e.g., 'INFO', 'DEBUG') to be ignored.
+     * @throws {Error} If the log file type isnt supported.
+     */
     constructor(output_dir = 'logs', log_file_type = 'log', settings_path = './log_settings.json', LogLevel = 'INFO') {
         // Set log level to upper case
         this.loglevel = LogLevel.toUpperCase();
@@ -55,6 +63,13 @@ class Logger {
         this.create_log_file(); // Ensure log file is created during initialization
     }
 
+    /**
+     * Logs a message with the specified level.
+     * @param {string} level - The log level (e.g., 'INFO', 'DEBUG').
+     * @param {string} message - The message to log.
+     * @param {*} [context=null] - Additional context for the log message.
+     * @throws {FileNotOpen} If the settings or the Log file isnt open.
+     */
     log(level, message, context = null) {
         const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '');
         level = level.toUpperCase(); // make the level upper case if it isn't
@@ -93,7 +108,12 @@ class Logger {
             throw new FileNotOpen('Log file is not open');
         }
     }
-
+    /**
+    * @param {string} [level] -The severity level.
+    * @param {string} [message] - The message to be logged.
+    * @param {string} [timestamp] - The time at which the message was logged.
+    * @param {any} [context] - The context to be logged.
+    */
     Formatter(level, message, timestamp, context_value = false, context = null) {
         if (this.settings) {
             if (context_value) {
@@ -155,6 +175,10 @@ class Logger {
         }
     }
 
+    /**
+    * @param {string} [path] - The path to be opened
+    * @throws {PathNonExistant} If the file path does not exist
+    */
     load_json(path) {
         if (fs.existsSync(path)) {
             const data = fs.readFileSync(path, 'utf8');
@@ -163,7 +187,10 @@ class Logger {
             throw new PathNonExistant('File path does not exist');
         }
     }
-
+    
+    /**
+     *@throws {FileNotOpen} If the log file is not open 
+     */
     close() {
         if (this.log_file) {
             try {

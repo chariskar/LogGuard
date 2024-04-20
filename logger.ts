@@ -6,6 +6,15 @@ class FileNotOpen extends Error {} // FileNotOpen Error
 class PathNonExistant extends Error {} // PathNonExistant Error
 
 class Logger {
+    /**
+     * Creates an instance of the Logger class.
+     * @param {string} [output_dir='logs'] - The directory where log files will be stored.
+     * @param {string} [log_file_type='log'] - The type of log file (e.g., 'log', 'txt').
+     * @param {string} [settings_path='./log_settings.json'] - The path to the log settings file.
+     * @param {string} [LogLevel='INFO'] - The log level (e.g., 'INFO', 'DEBUG') to be ignored.
+     * @throws {Error} If the log file type isnt supported.
+     */
+
     private loglevel: string;
     private open_loggers: Record<string, fs.WriteStream> = {};
     private settings: Settings;
@@ -67,7 +76,15 @@ class Logger {
         this.create_log_file(); // Ensure log file is created during initialization
     }
 
+     /**
+     * Logs a message with the specified level.
+     * @param {string} level - The log level (e.g., 'INFO', 'DEBUG').
+     * @param {string} message - The message to log.
+     * @param {*} [context=null] - Additional context for the log message.
+     * @throws {FileNotOpen} If the settings or the Log file isnt open.
+     */
     log(level: string, message: string, context: object = null): void {
+        
         const timestamp: string = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '');
         level = level.toUpperCase(); // make the level upper case if it isn't
 
@@ -81,7 +98,7 @@ class Logger {
                         if (timestamp) {
                             // write the formatted message to the log file
                             if (context) {
-                                const formatted_message: string = this.Formatter(level, message, timestamp, true, context);
+                                const formatted_message: string = this.Formatter(level, message, timestamp, context);
                                 if (formatted_message !== null) {
                                     this.log_file.write(formatted_message);
                                     
@@ -105,18 +122,23 @@ class Logger {
             throw new FileNotOpen('Log file is not open');
         }
     }
-
-    Formatter(level: string, message: string, timestamp: string, context_value: boolean = false, context = null): string {
+    
+    /**
+    * @param {string} [level] -The severity level.
+    * @param {string} [message] - The message to be logged.
+    * @param {string} [timestamp] - The time at which the message was logged.
+    * @param {any} [context] - The context to be logged.
+    */
+    Formatter(level: string, message: string, timestamp: string,  context = null): string {
         if (this.settings) {
-            if (context_value) {
-                if (context) {
-                    const format_template: string = this.settings['Formats']['Context'];
-                    const formatted_message: string = format_template.replace('{level}', level)
+            if (context) {
+                const format_template: string = this.settings['Formats']['Context'];
+                const formatted_message: string = format_template.replace('{level}', level)
                         .replace('{message}', message)
                         .replace('{timestamp}', timestamp)
                         .replace('{context}', context);
                     return formatted_message + '\n';
-                }
+                
             } else {
                 const format_template: string = this.settings['Formats']['NonContext'];
                 const formatted_message: string = format_template
@@ -151,8 +173,8 @@ class Logger {
                 this.log('info', 'Starting'); // set a starting message
             }
         } catch (error) {
-            console.error(`Error: Unable to open or create log file ${this.log_file_name}: ${error.message}`);
-            throw error; // rethrow the error
+
+            throw new Error(`Unexpected Error ${error}`)
         }
     }
 
@@ -163,7 +185,10 @@ class Logger {
             throw new PathNonExistant('File path not found'); // raise an error if file path is  null
         }
     }
-
+    /**
+    * @param {string} [path] - The path to be opened
+    * @throws {PathNonExistant} If the file path does not exist
+    */
     load_json(path: string): void {
         if (fs.existsSync(path)) {
             const data: string = fs.readFileSync(path, 'utf8');
@@ -173,6 +198,9 @@ class Logger {
         }
     }
 
+     /**
+     *@throws {FileNotOpen} If the log file is not open 
+     */
     close(): void {
         if (this.log_file) {
             try {
