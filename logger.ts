@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import type { Settings } from './types';
+
 class FileNotOpen extends Error {} // FileNotOpen Error
 class PathNonExistant extends Error {} // PathNonExistant Error
 
