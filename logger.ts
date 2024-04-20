@@ -122,7 +122,7 @@ class Logger {
             throw new FileNotOpen('Log file is not open');
         }
     }
-    
+
     /**
     * @param {string} [level] -The severity level.
     * @param {string} [message] - The message to be logged.
