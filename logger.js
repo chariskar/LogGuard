@@ -7,13 +7,14 @@ class PathNonExistant extends Error {} // PathNonExistant Error
 
 class Logger {
     /**
-     * Creates an instance of the Logger class.
      * @param {string} [output_dir='logs'] - The directory where log files will be stored.
      * @param {string} [log_file_type='log'] - The type of log file (e.g., 'log', 'txt').
      * @param {string} [settings_path='./log_settings.json'] - The path to the log settings file.
      * @param {string} [LogLevel='INFO'] - The log level (e.g., 'INFO', 'DEBUG') to be ignored.
      * @throws {Error} If the log file type isnt supported.
+     * @description  The logger class
      */
+    
     constructor(output_dir = 'logs', log_file_type = 'log', settings_path = './log_settings.json', LogLevel = 'INFO') {
         // Set log level to upper case
         this.loglevel = LogLevel.toUpperCase();
@@ -64,11 +65,11 @@ class Logger {
     }
 
     /**
-     * Logs a message with the specified level.
      * @param {string} level - The log level (e.g., 'INFO', 'DEBUG').
      * @param {string} message - The message to log.
      * @param {*} [context=null] - Additional context for the log message.
      * @throws {FileNotOpen} If the settings or the Log file isnt open.
+     * @description Logs the message to the log file
      */
     log(level, message, context = null) {
         const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '');
@@ -108,11 +109,14 @@ class Logger {
             throw new FileNotOpen('Log file is not open');
         }
     }
+
     /**
     * @param {string} [level] -The severity level.
     * @param {string} [message] - The message to be logged.
     * @param {string} [timestamp] - The time at which the message was logged.
     * @param {any} [context] - The context to be logged.
+    * @throws {FileNotOpen} If the settings file is not open.
+    * @description Format the message
     */
     Formatter(level, message, timestamp, context_value = false, context = null) {
         if (this.settings) {
@@ -138,6 +142,10 @@ class Logger {
         }
     }
 
+    /**
+     * @throws {PathNonExistant} If the the path is null.
+     * @description Create the log file in the specified directory.
+     */
     create_log_file() {
         this.log_file_name = this.get_log_name(); // get the log file name
     
@@ -159,14 +167,15 @@ class Logger {
                 this.log('info', 'Starting'); // set a starting message
             }
         } catch (error) {
-            console.error(`Error: Unable to open or create log file ${this.log_file_name}: ${error.message}`);
-            throw error; // rethrow the error
+           
+            throw new Error(`Unexpected Error ${error}`); 
         }
     }
-    
-    
-    
-
+     
+    /**
+     * @throws {PathNonExistant} If file path is null
+     * @description Get the full path of the log file
+     */
     get_log_name() {
         if (this.file_path) {
             return path.resolve(this.file_path, `${this.timestamp}.${this.log_file_type}`); // return the filepath and the name of the file
@@ -178,6 +187,7 @@ class Logger {
     /**
     * @param {string} [path] - The path to be opened
     * @throws {PathNonExistant} If the file path does not exist
+    * @description Opens json files
     */
     load_json(path) {
         if (fs.existsSync(path)) {
@@ -190,6 +200,7 @@ class Logger {
     
     /**
      *@throws {FileNotOpen} If the log file is not open 
+     *@description Closes the current log file
      */
     close() {
         if (this.log_file) {
