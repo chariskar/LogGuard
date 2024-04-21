@@ -14,7 +14,7 @@
     },
     "plugins": [
       "@typescript-eslint",
-      "jsdoc" // Added jsdoc plugin
+      "jsdoc" 
     ],
     "rules": {
       "linebreak-style": [
