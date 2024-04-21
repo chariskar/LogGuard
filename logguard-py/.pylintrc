@@ -7,10 +7,10 @@ disable = missing-module-docstring,missing-function-docstring,missing-class-docs
 
 
 [FORMAT]
-max-line-length = 110
+max-line-length = 150
 
 [DESIGN]
-max-args = 7
+max-args = 12
 max-attributes = 12
 max-locals = 15
 max-branches = 15

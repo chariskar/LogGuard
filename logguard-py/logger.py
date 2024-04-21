@@ -1,4 +1,3 @@
-# imports
 import datetime
 import sys
 from pathlib import Path
@@ -13,29 +12,46 @@ class Errors:
 
     class FileNotOpen(Exception):
         """FileNotOpen Error"""
-        pass
+        
 
     class PathNonExistent(Exception):
         """PathNonExistent Error"""
-        pass
+        
 
     class LevelNotSupported(Exception):
         """LevelNotSupported Error"""
-        pass
 
     class UnableToLock(Exception):
         """UnableToLock Error"""
-        pass
 
     class LockNonExistent(Exception):
         """LockNonExistent Error"""
-        pass
 
 class Logger:
+    """
+        Initialize Logger instance.
+
+        Args:
+            output_dir (str, optional): the output location. Defaults to 'logs'.
+            log_file_type (str, optional): the file log type. Defaults to 'log'.
+            settings_path (str, optional): the settings path. Defaults to './log_settings.json'.
+            log_level (str, optional): the log level. Defaults to 'INFO'.
+
+        Raises:
+            ValueError: If the log file type isn't supported.
+            PathNonExistent: If the log file path does not exist.
+            FileNotOpen: If the log file is not open.
+            PathNonExistent: If the log settings file path does not exist.
+            UnableToLock: If the script is unable to get a thread lock.
+        """
     open_loggers_lock = threading.Lock()  # Lock for synchronizing access to open_loggers
     open_loggers = {}  # Thread-safe dictionary to store open loggers
 
-    def __init__(self, output_dir: str = "logs", log_file_type: str = "log", settings_path: str = './log_settings.json', log_level: str = 'INFO'):
+    def __init__(self,
+                 output_dir: str = "logs",
+                 log_file_type: str = "log",
+                 settings_path: str = './log_settings.json',
+                 log_level: str = 'INFO'):
         """
         Initialize Logger instance.
 
@@ -79,7 +95,8 @@ class Logger:
         self.file_path = Path.cwd().resolve() if output_dir == "." else Path(output_dir).resolve()
         self.settings_path = settings_path
         self.load_json(self.settings_path)
-        self.configured_level_value = self.settings['LogLevels'][self.log_level] if self.settings else None
+        if self.settings:
+            self.configured_level_value = self.settings['LogLevels'][self.log_level]
 
         # Create the log file
         self.create_log_file()
@@ -91,7 +108,7 @@ class Logger:
         Args:
             level (str): The log level.
             message (str): The log message.
-            context (dict, optional): Contextual information to be included in the log message. Defaults to None.
+            context (dict, optional): Contextual information to be included in the log message.
 
         Raises:
             FileNotOpen: If log file is not open.
@@ -110,10 +127,12 @@ class Logger:
                             if log_level_value >= self.configured_level_value:
                                 if timestamp:
                                     if context:
-                                        formatted_message = self.Formatter(level, message,
-                                                                           timestamp, context=context)
+                                        formatted_message = self.formatter(
+                                                                        level, message,
+                                                                           timestamp,
+                                                                           context=context)
                                     else:
-                                        formatted_message = self.Formatter(level, message,
+                                        formatted_message = self.formatter(level, message,
                                                                            str(timestamp))
 
                                     if formatted_message is not None:
@@ -128,7 +147,7 @@ class Logger:
         else:
             raise Errors.LockNonExistent("Self.lock is None or false for some reason contact dev ")
 
-    def Formatter(self, level: str, message: str, timestamp: str, context: object = None):
+    def formatter(self, level: str, message: str, timestamp: str, context: object = None):
         """
         Format log message.
 
@@ -155,8 +174,7 @@ class Logger:
                                                            , timestamp=timestamp)
                 
             return formatted_message + "\n"
-        else:
-            raise Errors.FileNotOpen('Settings file is not open')
+        raise Errors.FileNotOpen('Settings file is not open')
 
     def create_log_file(self):
         """
@@ -176,7 +194,7 @@ class Logger:
             if self.log_file_name in Logger.open_loggers:
                 self.log_file = Logger.open_loggers[self.log_file_name]
             else:
-                with open(str(self.log_file_name), "a") as log_file: 
+                with open(str(self.log_file_name), "a",encoding="utf-8") as log_file: 
                     self.log_file = log_file
                 Logger.open_loggers[self.log_file_name] = self.log_file
                 self.log('info', "Starting")
@@ -195,8 +213,7 @@ class Logger:
         """
         if self.file_path:
             return self.file_path / f"{self.timestamp}.{self.log_file_type}"
-        else:
-            raise Errors.PathNonExistent("File path not found")
+        raise Errors.PathNonExistent("File path not found")
 
     def load_json(self, path: str):
         """
@@ -212,7 +229,7 @@ class Logger:
         if self.lock:
             with self.lock:
                 if Path(path).resolve():
-                    with open(path, 'r') as f:
+                    with open(path, 'r',encoding="utf-8") as f:
                         self.settings = json.load(f)
                 else:
                     raise Errors.PathNonExistent('File path does not exist')
@@ -240,6 +257,6 @@ class Logger:
                         self.log_file = None
                         self.lock.release()
                 else:
-                    Errors.LockNonExistent('Threading lock is None or False for some reason, contact dev')
-        else:
-            raise Errors.FileNotOpen("Log file is not open")
+                    raise Errors.LockNonExistent('Threading lock is None or False for some reason')
+        raise Errors.FileNotOpen("Log file is not open")
+        
