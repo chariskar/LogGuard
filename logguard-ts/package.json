@@ -1,6 +1,6 @@
 {
-  "name": "logger",
-  "module": "test.ts",
+  "name": "logguard-ts",
+  "module": "logger.ts",
   "type": "module",
   "devDependencies": {
     "@types/bun": "latest",
