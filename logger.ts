@@ -1,9 +1,18 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import type { Settings } from './types';
+
 
 class FileNotOpen extends Error {} // FileNotOpen Error
 class PathNonExistant extends Error {} // PathNonExistant Error
+
+interface Settings{
+    LogLevels: {
+        [key: string]: number;
+    };
+    Formats: {
+        [key: string]: string;
+    };
+}
 
 class Logger {
     /**
@@ -31,7 +40,7 @@ class Logger {
         // Set log level to upper case
         this.loglevel = LogLevel.toUpperCase();
         
-        // Initialise variables
+        // Initialise variables.
         this.settings = null;
         this.configured_level_value = null;
         this.file_path = null;
