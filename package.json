@@ -3,7 +3,9 @@
   "module": "test.ts",
   "type": "module",
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "eslint-plugin-jsdoc": "^48.2.3",
+    "jdoc": "^0.2.0"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

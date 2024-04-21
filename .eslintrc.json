@@ -1,31 +1,48 @@
 {
     "env": {
-        "browser": false,
-        "es2021": true,
-        "es6": true
+      "browser": false,
+      "es2021": true,
+      "es6": true
     },
     "extends": [
-        "eslint:recommended",
-        "plugin:@typescript-eslint/recommended"
+      "eslint:recommended",
+      "plugin:@typescript-eslint/recommended"
     ],
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "ecmaVersion": "latest"
+      "ecmaVersion": "latest"
     },
     "plugins": [
-        "@typescript-eslint"
+      "@typescript-eslint",
+      "jsdoc" // Added jsdoc plugin
     ],
     "rules": {
-
-        "linebreak-style": [
-            "error",
-            "windows"
-        ],
-        "quotes": [
-            "warn",
-            "single"
-        ],
-
-        "@typescript-eslint/no-explicit-any": 2  
+      "linebreak-style": [
+        "error",
+        "windows"
+      ],
+      "quotes": [
+        "warn",
+        "single"
+      ],
+      "@typescript-eslint/comma-spacing": "error",
+      "@typescript-eslint/indent": "warn",
+      "no-unsafe-finally": "error",
+      "@typescript-eslint/no-explicit-any": 2,
+      "@typescript-eslint/no-unused-vars": "warn",
+      "no-duplicate-imports": "error",
+      "jsdoc/require-jsdoc": [ 
+        "error",
+        {
+          "require": {
+            "FunctionDeclaration": true,
+            "MethodDefinition": true,
+            "ClassDeclaration": true,
+            "ArrowFunctionExpression": true,
+            "FunctionExpression": true
+          }
+        }
+      ]
     }
-}
+  }
+  
