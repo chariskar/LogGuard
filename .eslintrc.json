@@ -14,12 +14,12 @@
     },
     "plugins": [
       "@typescript-eslint",
-      "jsdoc" // Added jsdoc plugin
+      "jsdoc"
     ],
     "rules": {
       "linebreak-style": [
         "error",
-        "windows"
+        "auto"
       ],
       "quotes": [
         "warn",
@@ -28,8 +28,8 @@
       "@typescript-eslint/comma-spacing": "error",
       "@typescript-eslint/indent": "warn",
       "no-unsafe-finally": "error",
-      "@typescript-eslint/no-explicit-any": 2,
-      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/no-explicit-any": 1,
+      "@typescript-eslint/no-unused-vars": "error",
       "no-duplicate-imports": "error",
       "jsdoc/require-jsdoc": [ 
         "error",
@@ -42,7 +42,14 @@
             "FunctionExpression": true
           }
         }
-      ]
+
+      ],
+      "@typescript-eslint/no-extra-semi": true,
+      "no-unused-vars": "error",
+      "@typescript-eslint/naming-convention": "error",
+      "no-magic-numbers": "error",
+      "no-confusing-arrow":"error"
+      
     }
   }
   

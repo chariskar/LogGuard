@@ -5,6 +5,7 @@ import * as path from 'path';
 class FileNotOpen extends Error {} // FileNotOpen Error
 class PathNonExistant extends Error {} // PathNonExistant Error
 
+// Settings format
 interface Settings{
     LogLevels: {
         [key: string]: number;
@@ -33,8 +34,8 @@ class Logger {
     private log_file_name: string | null;
     private timestamp: string | null;
     private supported_formats: string[] = ['log','txt']
-    private log_file_type
-    private settings_path
+    private log_file_type: string
+    private settings_path: string
 
     constructor(output_dir: string = 'logs', log_file_type: string = 'log', settings_path: string = './log_settings.json', LogLevel: string = 'INFO') {
         // Set log level to upper case
@@ -138,6 +139,7 @@ class Logger {
     * @param {string} [timestamp] - The time at which the message was logged.
     * @param {any} [context] - The context to be logged.
     * @throws {FileNotOpen} If the settings file is not open.
+    * @returns {string} The formated message
     * @description Format the message
     */
     Formatter(level: string, message: string, timestamp: string,  context= null): string {
@@ -196,8 +198,9 @@ class Logger {
     }
 
     /**
-     * @throws {PathNonExistant} If file path is null
-     * @description Get the full path of the log file
+     * @throws {PathNonExistant} If file path is null.
+     * @description Get the full path of the log file.
+     * @returns {string} The full log file path.
      */
     get_log_name(): string {
         if (this.file_path) {
