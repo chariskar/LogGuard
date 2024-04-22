@@ -4,7 +4,7 @@ All loggers have the exact same usage for example.
 
 # Python
 
-  from logger import * as Logger
+  from logger import Logger
   
   logger = Logger()
 
