@@ -1,6 +1,6 @@
 {
   "name": "logguard-js",
-  "module": "test.ts",
+  "module": "logger.js",
   "type": "module",
   "version": "0.1.0",
   "devDependencies": {
@@ -8,7 +8,5 @@
     "eslint-plugin-jsdoc": "^48.2.3",
     "jdoc": "^0.2.0"
   },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  }
+   
 }
