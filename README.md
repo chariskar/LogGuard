@@ -7,6 +7,7 @@ All loggers have the exact same usage for example.
   from logger import * as Logger
   
   logger = Logger()
+
   logger.log('info','Hello')
 
 # JavaScript
@@ -14,6 +15,7 @@ All loggers have the exact same usage for example.
   import * as Logger from './Logger' or import * as Logger from 'Logger' if it is installed as a module
   
   const logger = new Logger.Logger()
+
   logger.log('info','hello')
 
 # TypeScript
@@ -21,6 +23,7 @@ All loggers have the exact same usage for example.
   import * as Logger from './Logger' or import * as Logger from 'Logger' if it is installed as a module
   
   const logger = new Logger.Logger()
+
   logger.log('info','hello')
 
 # Contribute
