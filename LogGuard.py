@@ -44,8 +44,8 @@ class LogGuard:
             PathNonExistent: If the log settings file path does not exist.
             UnableToLock: If the script is unable to get a thread lock.
         """
-    open_loggers_lock = threading.Lock()  # Lock for synchronizing access to open_loggers
-    open_loggers = {}  # Thread-safe dictionary to store open loggers
+    _open_loggers_lock = threading.Lock()  # Lock for synchronizing access to open_loggers
+    _open_loggers = {}  # Thread-safe dictionary to store open loggers
 
     def __init__(self,
                  output_dir: str = "logs",
@@ -68,11 +68,11 @@ class LogGuard:
             PathNonExistent: If the log settings file path does not exist.
             UnableToLock: If the script is unable to get a thread lock.
         """
-        self.lock = None
+        self._lock = None
 
         try:
             # Attempt to create a thread lock
-            self.lock = threading.Lock()
+            self._lock = threading.Lock()
         except Exception as e:
             # Raise an error if unable to create a thread lock
             raise Errors.UnableToLock(f"Unable to get process lock with error {e}")
@@ -81,25 +81,25 @@ class LogGuard:
         self.log_level = log_level.upper()
 
         # Initialize variables
-        self.settings = None
+        self._settings = None
         self.configured_level_value = None
         self.file_path = None
-        self.log_file = None
+        self._log_file = None
         self.log_file_name = None
-        self.timestamp = None
+        self._timestamp = None
 
         # Assign values
         self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.supported_formats = ["log", "txt"]
         self.log_file_type = log_file_type if log_file_type in self.supported_formats else 'log'
-        self.file_path = Path.cwd().resolve() if output_dir == "." else Path(output_dir).resolve()
+        self._file_path = Path.cwd().resolve() if output_dir == "." else Path(output_dir).resolve()
         self.settings_path = settings_path
-        self.load_json(self.settings_path)
+        self._load_json(self.settings_path)
         if self.settings:
             self.configured_level_value = self.settings['LogLevels'][self.log_level]
 
         # Create the log file
-        self.create_log_file()
+        self._create_log_file()
 
     def log(self, level: str, message: str, context=None):
         """
@@ -118,8 +118,8 @@ class LogGuard:
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         level = level.upper()
 
-        if self.lock:
-            with self.lock:
+        if self._lock:
+            with self._lock:
                 if self.log_file:
                     if self.settings:
                         log_level_value = self.settings['LogLevels'][level]
@@ -127,12 +127,12 @@ class LogGuard:
                             if log_level_value >= self.configured_level_value:
                                 if timestamp:
                                     if context:
-                                        formatted_message = self.formatter(
+                                        formatted_message = self._formatter(
                                                                         level, message,
                                                                            timestamp,
                                                                            context=context)
                                     else:
-                                        formatted_message = self.formatter(level, message,
+                                        formatted_message = self._formatter(level, message,
                                                                            str(timestamp))
 
                                     if formatted_message is not None:
@@ -147,7 +147,7 @@ class LogGuard:
         else:
             raise Errors.LockNonExistent("Self.lock is None or false for some reason contact dev ")
 
-    def formatter(self, level: str, message: str, timestamp: str, context: object = None):
+    def _formatter(self, level: str, message: str, timestamp: str, context: object = None):
         """
         Format log message.
 
@@ -176,14 +176,14 @@ class LogGuard:
             return formatted_message + "\n"
         raise Errors.FileNotOpen('Settings file is not open')
 
-    def create_log_file(self):
+    def _create_log_file(self):
         """
         Generate the log file.
 
         Raises:
             PathNonExistent: If the file path is not found.
         """
-        self.log_file_name = self.get_log_name()
+        self.log_file_name = self._get_log_name()
 
         if self.file_path:
             self.file_path.mkdir(parents=True, exist_ok=True)
@@ -191,17 +191,17 @@ class LogGuard:
             raise Errors.PathNonExistent("File path not found")
 
         try:
-            if self.log_file_name in LogGuard.open_loggers:
-                self.log_file = LogGuard.open_loggers[self.log_file_name]
+            if self.log_file_name in LogGuard._open_loggers:
+                self.log_file = LogGuard._open_loggers[self.log_file_name]
             else:
                 with open(str(self.log_file_name), "a",encoding="utf-8") as log_file: 
                     self.log_file = log_file
-                LogGuard.open_loggers[self.log_file_name] = self.log_file
+                LogGuard._open_loggers[self.log_file_name] = self.log_file
                 self.log('info', "Starting")
         except IOError:
             sys.stderr.write(f"Error: Unable to open log file {self.log_file_name}\n")
 
-    def get_log_name(self):
+    def _get_log_name(self):
         """
         Get the log file name.
 
@@ -215,7 +215,7 @@ class LogGuard:
             return self.file_path / f"{self.timestamp}.{self.log_file_type}"
         raise Errors.PathNonExistent("File path not found")
 
-    def load_json(self, path: str):
+    def _load_json(self, path: str):
         """
         Load JSON settings.
 
@@ -226,8 +226,8 @@ class LogGuard:
             PathNonExistent: If the file path does not exist.
             LockNonExistent: If the script doesn't have a lock.
         """
-        if self.lock:
-            with self.lock:
+        if self._lock:
+            with self._lock:
                 if Path(path).resolve():
                     with open(path, 'r',encoding="utf-8") as f:
                         self.settings = json.load(f)
@@ -248,14 +248,14 @@ class LogGuard:
             try:
                 self.log('info', "Closing file")
             finally:
-                if self.lock:
-                    with self.lock:
+                if self._lock:
+                    with self._lock:
                         self.log_file.close()
-                        with self.open_loggers_lock:
-                            if self.log_file_name in self.open_loggers:
-                                del self.open_loggers[self.log_file_name]
+                        with self._open_loggers_lock:
+                            if self.log_file_name in self._open_loggers:
+                                del self._open_loggers[self.log_file_name]
                         self.log_file = None
-                        self.lock.release()
+                        self._lock.release()
                 else:
                     raise Errors.LockNonExistent('Threading lock is None or False for some reason')
         raise Errors.FileNotOpen("Log file is not open")
