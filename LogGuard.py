@@ -4,7 +4,7 @@ from pathlib import Path
 import threading
 import json
 
-__all__ = ["Logger"]
+__all__ = ["LogGuard"]
 
 # Custom Errors
 class Errors:
@@ -27,7 +27,7 @@ class Errors:
     class LockNonExistent(Exception):
         """LockNonExistent Error"""
 
-class Logger:
+class LogGuard:
     """
         Initialize Logger instance.
 
@@ -191,12 +191,12 @@ class Logger:
             raise Errors.PathNonExistent("File path not found")
 
         try:
-            if self.log_file_name in Logger.open_loggers:
-                self.log_file = Logger.open_loggers[self.log_file_name]
+            if self.log_file_name in LogGuard.open_loggers:
+                self.log_file = LogGuard.open_loggers[self.log_file_name]
             else:
                 with open(str(self.log_file_name), "a",encoding="utf-8") as log_file: 
                     self.log_file = log_file
-                Logger.open_loggers[self.log_file_name] = self.log_file
+                LogGuard.open_loggers[self.log_file_name] = self.log_file
                 self.log('info', "Starting")
         except IOError:
             sys.stderr.write(f"Error: Unable to open log file {self.log_file_name}\n")

@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='LogGuard',
-    version='0.2.1',
+    version='0.2.7',
     description='A simple Python Logger',
     author='Charilaos Karametos',
     packages=find_packages(),
@@ -26,5 +26,9 @@ setup(
         "snowballstemmer==2.2.0",
         "tomlkit==0.12.4"
         ],
-    package_data={'': ['log_settings.json']},  
+    package_data={'': ['log_settings.json']},
+    license="MIT",
+    python_requires=">=3.6"
+    
+  
 )
