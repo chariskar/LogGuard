@@ -5,6 +5,9 @@ All loggers have the exact same usage for example.
 # Python
 
   from logger import Logger
+
+  if the logger is in a diffrent directory than your file please update the paths accordingly 
+
   
   logger = Logger()
 
@@ -14,6 +17,8 @@ All loggers have the exact same usage for example.
 
   import * as Logger from './Logger' or import * as Logger from 'Logger' if it is installed as a module
   
+  if the logger is in a diffrent directory than your file please update the paths accordingly 
+
   const logger = new Logger.Logger()
 
   logger.log('info','hello')
@@ -23,6 +28,9 @@ All loggers have the exact same usage for example.
   import * as Logger from './Logger' or import * as Logger from 'Logger' if it is installed as a module
   
   const logger = new Logger.Logger()
+  
+  if the logger is in a diffrent directory than your file please update the paths accordingly 
+
 
   logger.log('info','hello')
 

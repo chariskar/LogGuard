@@ -37,12 +37,11 @@ class Logger {
     private log_file_type: string
     private settings_path: string
 
-    constructor(output_dir: string = 'logs', log_file_type: string = 'log', settings_path: string = './log_settings.json', LogLevel: string = 'INFO') {
+    constructor(output_dir: string = 'logs', log_file_type: string = 'log', settings_path: string = 'log_settings.json', LogLevel: string = 'INFO') {
         // Set log level to upper case
         this.loglevel = LogLevel.toUpperCase();
-        
         // Initialise variables.
-;
+
 
         // Assign values
         // Set timestamp to current date and time in the specified format
@@ -210,6 +209,8 @@ class Logger {
     * @description Opens json files
     */
     load_json(path: string): void {
+        console.log(path)
+
         if (fs.existsSync(path)) {
             const data: string = fs.readFileSync(path, 'utf8');
             this.settings = JSON.parse(data);
