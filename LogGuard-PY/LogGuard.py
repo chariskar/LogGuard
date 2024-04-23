@@ -10,18 +10,18 @@ __all__ = ["Logger"]
 class __Errors:
     """Contains Custom __Errors"""
 
-    class __FileNotOpen(Exception):
-        """__FileNotOpen Error"""
+    class FileNotOpen(Exception):
+        """FileNotOpen Error"""
         
 
-    class __PathNonExistent(Exception):
-        """__PathNonExistent Error"""
+    class PathNonExistent(Exception):
+        """PathNonExistent Error"""
 
-    class __UnableToLock(Exception):
-        """__UnableToLock Error"""
+    class UnableToLock(Exception):
+        """UnableToLock Error"""
 
-    class __LockNonExistent(Exception):
-        """__LockNonExistent Error"""
+    class LockNonExistent(Exception):
+        """LockNonExistent Error"""
 
 class Logger:
     """
@@ -35,10 +35,10 @@ class Logger:
 
         Raises:
             ValueError: If the log file type isn't supported.
-            __PathNonExistent: If the log file path does not exist.
-            __FileNotOpen: If the log file is not open.
-            __PathNonExistent: If the log settings file path does not exist.
-            __UnableToLock: If the script is unable to get a thread lock.
+            PathNonExistent: If the log file path does not exist.
+            FileNotOpen: If the log file is not open.
+            PathNonExistent: If the log settings file path does not exist.
+            UnableToLock: If the script is unable to get a thread lock.
         """
     _open_loggers_lock = threading.Lock()  # Lock for synchronizing access to open_loggers
     _open_loggers = {}  # Thread-safe dictionary to store open loggers
@@ -59,10 +59,10 @@ class Logger:
 
         Raises:
             ValueError: If the log file type isn't supported.
-            __PathNonExistent: If the log file path does not exist.
-            __FileNotOpen: If the log file is not open.
-            __PathNonExistent: If the log settings file path does not exist.
-            __UnableToLock: If the script is unable to get a thread lock.
+            PathNonExistent: If the log file path does not exist.
+            FileNotOpen: If the log file is not open.
+            PathNonExistent: If the log settings file path does not exist.
+            UnableToLock: If the script is unable to get a thread lock.
         """
         self.__lock = None
 
@@ -71,7 +71,7 @@ class Logger:
             self.__lock = threading.Lock()
         except Exception as e:
             # Raise an error if unable to create a thread lock
-            raise __Errors.__UnableToLock(f"Unable to get process lock with error {e}")
+            raise __Errors.UnableToLock(f"Unable to get process lock with error {e}")
 
         # Set log level to upper case
         self.log_level = log_level.upper()
@@ -107,9 +107,9 @@ class Logger:
             context (dict, optional): Contextual information to be included in the log message.
 
         Raises:
-            __FileNotOpen: If log file is not open.
-            __LockNonExistent: If the script doesn't have a lock.
-            __FileNotOpen: If the log file is not open.
+            FileNotOpen: If log file is not open.
+            LockNonExistent: If the script doesn't have a lock.
+            FileNotOpen: If the log file is not open.
         """
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")
         level = level.upper()
@@ -137,11 +137,11 @@ class Logger:
                             else:
                                 pass
                     else:
-                        raise __Errors.__FileNotOpen('Settings file is not open')
+                        raise __Errors.FileNotOpen('Settings file is not open')
                 else:
-                    raise __Errors.__FileNotOpen('Log file is not open')
+                    raise __Errors.FileNotOpen('Log file is not open')
         else:
-            raise __Errors.__LockNonExistent("Self.lock is None or false for some reason contact dev ")
+            raise __Errors.LockNonExistent("Self.lock is None or false for some reason contact dev ")
 
     def _formatter(self, level: str, message: str, timestamp: str, context: object = None):
         """
@@ -157,7 +157,7 @@ class Logger:
             str: Formatted log message.
 
         Raises:
-            __FileNotOpen: If the settings file is not open.
+            FileNotOpen: If the settings file is not open.
         """
         if self.__settings:
             if context:
@@ -170,21 +170,21 @@ class Logger:
                                                            , timestamp=timestamp)
                 
             return formatted_message + "\n"
-        raise __Errors.__FileNotOpen('Settings file is not open')
+        raise __Errors.FileNotOpen('Settings file is not open')
 
     def _create_log_file(self):
         """
         Generate the log file.
 
         Raises:
-            __PathNonExistent: If the file path is not found.
+            PathNonExistent: If the file path is not found.
         """
         self.__log_file_name = self._get_log_name()
 
         if self.file_path:
             self.file_path.mkdir(parents=True, exist_ok=True)
         else:
-            raise __Errors.__PathNonExistent("File path not found")
+            raise __Errors.PathNonExistent("File path not found")
 
         try:
             if self.__log_file_name in Logger._open_loggers:
@@ -206,11 +206,11 @@ class Logger:
             str: The log file path and the name of it.
 
         Raises:
-            __PathNonExistent: If file path is not found.
+            PathNonExistent: If file path is not found.
         """
         if self.file_path:
             return self.file_path / f"{self.timestamp}.{self.__log_file_type}"
-        raise __Errors.__PathNonExistent("File path not found")
+        raise __Errors.PathNonExistent("File path not found")
 
     def _load_json(self, path: str):
         """
@@ -220,8 +220,8 @@ class Logger:
             path (str): The path to the JSON settings file.
 
         Raises:
-            __PathNonExistent: If the file path does not exist.
-            __LockNonExistent: If the script doesn't have a lock.
+            PathNonExistent: If the file path does not exist.
+            LockNonExistent: If the script doesn't have a lock.
         """
         if self.__lock:
             with self.__lock:
@@ -229,17 +229,17 @@ class Logger:
                     with open(path, 'r',encoding="utf-8") as f:
                         self.__settings = json.load(f)
                 else:
-                    raise __Errors.__PathNonExistent('File path does not exist')
+                    raise __Errors.PathNonExistent('File path does not exist')
         else:
-            raise __Errors.__LockNonExistent('Thread lock does not exist, please contact dev')
+            raise __Errors.LockNonExistent('Thread lock does not exist, please contact dev')
 
     def close(self):
         """
         Close the current log file.
 
         Raises:
-            __FileNotOpen: If file is not open.
-            __LockNonExistent: If the script doesn't have a lock.
+            FileNotOpen: If file is not open.
+            LockNonExistent: If the script doesn't have a lock.
         """
         if self.__log_file:
             try:
@@ -254,6 +254,6 @@ class Logger:
                         self.__log_file = None
                         self.__lock.release()
                 else:
-                    raise __Errors.__LockNonExistent('Threading lock is None or False for some reason')
-        raise __Errors.__FileNotOpen("Log file is not open")
+                    raise __Errors.LockNonExistent('Threading lock is None or False for some reason')
+        raise __Errors.FileNotOpen("Log file is not open")
         
