@@ -31,7 +31,7 @@ class Logger {
     private configured_level_value: number | null;
     private file_path: string | null;
     private log_file: fs.WriteStream | null;
-    private log_file_name: string | null;
+    private log_file_name: string;
     private timestamp: string | null;
     private supported_formats: string[] = ['log','txt']
     private log_file_type: string
@@ -42,12 +42,7 @@ class Logger {
         this.loglevel = LogLevel.toUpperCase();
         
         // Initialise variables.
-        this.settings = null;
-        this.configured_level_value = null;
-        this.file_path = null;
-        this.log_file = null;
-        this.log_file_name = null;
-        this.timestamp = null;
+;
 
         // Assign values
         // Set timestamp to current date and time in the specified format
@@ -87,13 +82,13 @@ class Logger {
     }
 
      /**
-     * @param {string} level - The log level (e.g., 'INFO', 'DEBUG').
-     * @param {string} message - The message to log.
-     * @param {*} [context=null] - Additional context for the log message.
+     * @param {string} [level] - The log level (e.g., 'INFO', 'DEBUG').
+     * @param {string} [message] - The message to log.
+     * @param {any} [context] - Additional context for the log message.
      * @throws {FileNotOpen} If the settings or the Log file isnt open.
      * @description Logs the message to the log file
      */
-    log(level: string, message: string, context: object = null): void {
+    log(level: string, message: string, context: any): void {
         
         const timestamp: string = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '');
         level = level.toUpperCase(); // make the level upper case if it isn't
@@ -114,7 +109,7 @@ class Logger {
                                     
                                 }
                             } else {
-                                const formatted_message: string = this.Formatter(level, message, timestamp);
+                                const formatted_message: string = this.Formatter(level, message, timestamp, null);
                                 if (formatted_message !== null) {
                                     this.log_file.write(formatted_message);
                                     
@@ -142,7 +137,7 @@ class Logger {
     * @returns {string} The formated message
     * @description Format the message
     */
-    Formatter(level: string, message: string, timestamp: string,  context= null): string {
+    Formatter(level: string, message: string, timestamp: string,  context: any): string {
         if (this.settings) {
             if (context) {
                 // get the formats and then replace  placeholders with values
@@ -189,7 +184,7 @@ class Logger {
                 }
                 this.log_file = fs.createWriteStream(this.log_file_name, { flags: 'a' }); // open the log file
                 this.open_loggers[this.log_file_name] = this.log_file; // store the opened logger file
-                this.log('info', 'Starting'); // set a starting message
+                this.log('info', 'Starting', null); // set a starting message
             }
         } catch (error) {
 
@@ -230,7 +225,7 @@ class Logger {
     close(): void {
         if (this.log_file) {
             try {
-                this.log('info', 'Closing file');
+                this.log('info', 'Closing file',null);
             } finally {
                 this.log_file.close();
                 delete this.open_loggers[this.log_file_name];

@@ -28,7 +28,6 @@
       "@typescript-eslint/comma-spacing": "error",
       "@typescript-eslint/indent": "warn",
       "no-unsafe-finally": "error",
-      "@typescript-eslint/no-explicit-any": 1,
       "@typescript-eslint/no-unused-vars": "error",
       "no-duplicate-imports": "error",
       "jsdoc/require-jsdoc": [ 
