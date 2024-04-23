@@ -4,7 +4,7 @@ All loggers have the exact same usage for example.
 
 # Python
 
-  from logger import Logger
+  from LogGuard import Logger
   
   logger = Logger()
 
