@@ -1,3 +1,4 @@
+"""LogGuard Module"""
 import datetime
 import sys
 from pathlib import Path
@@ -8,14 +9,12 @@ __all__ = ["Logger"]
 __author__ = 'Charilaos Karametos'
 
 
-
 # Custom Errors
 class Errors:
     """Contains Custom Errors"""
 
     class FileNotOpen(Exception):
-        """FileNotOpen Error"""
-        
+        """FileNotOpen Error"""  
 
     class PathNonExistent(Exception):
         """PathNonExistent Error"""
@@ -120,30 +119,27 @@ class Logger:
 
         if self.__lock:
             with self.__lock:
-                if self.__log_file:
-                    if self.__settings:
-                        log_level_value = self.__settings['LogLevels'][level]
-                        if log_level_value and self.configured_level_value:
-                            if log_level_value >= self.configured_level_value:
-                                if timestamp:
-                                    if context:
-                                        formatted_message = self.formatter(
-                                                                        level, message,
-                                                                           timestamp,
-                                                                           context=context)
-                                    else:
-                                        formatted_message = self.formatter(level, message,
-                                                                           str(timestamp))
-
-                                    if formatted_message is not None:
-                                        self.__log_file.write(formatted_message)
-                                        self.__log_file.flush()
-                            else:
-                                pass
-                    else:
-                        raise Errors.FileNotOpen('Settings file is not open')
+                if self.__settings and self.__log_file:
+                    log_level_value = self.__settings['LogLevels'][level]
+                    if log_level_value and self.configured_level_value:
+                        if log_level_value >= self.configured_level_value:
+                            if timestamp:
+                                if context:
+                                    formatted_message = self.formatter(
+                                                                    level, message,
+                                                                       timestamp,
+                                                                       context=context)
+                                else:
+                                    formatted_message = self.formatter(level, message,
+                                                                       str(timestamp))
+                                if formatted_message is not None:
+                                    self.__log_file.write(formatted_message)
+                                    self.__log_file.flush()
+                        else:
+                            pass
                 else:
-                    raise Errors.FileNotOpen('Log file is not open')
+                    raise Errors.FileNotOpen('Settings or Log File  file is not open')
+
         else:
             raise Errors.LockNonExistent("Self.lock is None or false for some reason contact dev ")
 
@@ -172,7 +168,6 @@ class Logger:
                 format_template = self.__settings['Formats']['NonContext']
                 formatted_message = format_template.format(level=level, message=message
                                                            , timestamp=timestamp)
-                
             return formatted_message + "\n"
         raise Errors.FileNotOpen('Settings file is not open')
 
@@ -196,7 +191,6 @@ class Logger:
             else:
                 with open(str(self.__log_file_name), "a",encoding="utf-8") as log_file: 
                     self.__log_file = log_file
-
                 Logger.__open_loggers[self.__log_file_name] = self.__log_file
                 self.log('info', "Starting")
         except IOError:
