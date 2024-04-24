@@ -5,9 +5,12 @@ import threading
 import json
 
 __all__ = ["Logger"]
+__author__ = 'Charilaos Karametos'
 
-# Custom __Errors
-class __Errors:
+
+
+# Custom Errors
+class Errors:
     """Contains Custom Errors"""
 
     class FileNotOpen(Exception):
@@ -22,6 +25,7 @@ class __Errors:
 
     class LockNonExistent(Exception):
         """LockNonExistent Error"""
+
 
 class Logger:
     """
@@ -71,7 +75,7 @@ class Logger:
             self.__lock = threading.Lock()
         except Exception as e:
             # Raise an error if unable to create a thread lock
-            raise __Errors.UnableToLock(f"Unable to get process lock with error {e}")
+            raise Errors.UnableToLock(f"Unable to get process lock with error {e}")
 
         # Set log level to upper case
         self.log_level = log_level.upper()
@@ -137,11 +141,11 @@ class Logger:
                             else:
                                 pass
                     else:
-                        raise __Errors.FileNotOpen('Settings file is not open')
+                        raise Errors.FileNotOpen('Settings file is not open')
                 else:
-                    raise __Errors.FileNotOpen('Log file is not open')
+                    raise Errors.FileNotOpen('Log file is not open')
         else:
-            raise __Errors.LockNonExistent("Self.lock is None or false for some reason contact dev ")
+            raise Errors.LockNonExistent("Self.lock is None or false for some reason contact dev ")
 
     def formatter(self, level: str, message: str, timestamp: str, context: object = None):
         """
@@ -170,7 +174,7 @@ class Logger:
                                                            , timestamp=timestamp)
                 
             return formatted_message + "\n"
-        raise __Errors.FileNotOpen('Settings file is not open')
+        raise Errors.FileNotOpen('Settings file is not open')
 
     def __create_log_file(self):
         """
@@ -184,7 +188,7 @@ class Logger:
         if self.file_path:
             self.file_path.mkdir(parents=True, exist_ok=True)
         else:
-            raise __Errors.PathNonExistent("File path not found")
+            raise Errors.PathNonExistent("File path not found")
 
         try:
             if self.__log_file_name in Logger.__open_loggers:
@@ -210,7 +214,7 @@ class Logger:
         """
         if self.file_path:
             return self.file_path / f"{self.timestamp}.{self.__log_file_type}"
-        raise __Errors.PathNonExistent("File path not found")
+        raise Errors.PathNonExistent("File path not found")
 
     def __load_json(self, path: str):
         """
@@ -229,9 +233,9 @@ class Logger:
                     with open(path, 'r',encoding="utf-8") as f:
                         self.__settings = json.load(f)
                 else:
-                    raise __Errors.PathNonExistent('File path does not exist')
+                    raise Errors.PathNonExistent('File path does not exist')
         else:
-            raise __Errors.LockNonExistent('Thread lock does not exist, please contact dev')
+            raise Errors.LockNonExistent('Thread lock does not exist, please contact dev')
 
     def close(self):
         """
@@ -254,6 +258,6 @@ class Logger:
                         self.__log_file = None
                         self.__lock.release()
                 else:
-                    raise __Errors.LockNonExistent('Threading lock is None or False for some reason')
-        raise __Errors.FileNotOpen("Log file is not open")
+                    raise Errors.LockNonExistent('Threading lock is None or False for some reason')
+        raise Errors.FileNotOpen("Log file is not open")
         
