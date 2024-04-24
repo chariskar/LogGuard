@@ -95,7 +95,7 @@ class Logger:
             self.configured_level_value = self.__settings['LogLevels'][self.log_level]
 
         # Create the log file
-        self._create_log_file()
+        self.__create_log_file()
 
     def log(self, level: str, message: str, context=None):
         """
@@ -172,7 +172,7 @@ class Logger:
             return formatted_message + "\n"
         raise __Errors.FileNotOpen('Settings file is not open')
 
-    def _create_log_file(self):
+    def __create_log_file(self):
         """
         Generate the log file.
 
