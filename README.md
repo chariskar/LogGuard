@@ -30,9 +30,9 @@ All loggers have the exact same usage for example.
 
 If you want to contribute to the codebase your code must fit the code style.
 
-If you are contributing to the JavaScript or Typescript Loggers make sure to use the ready .eslintrc.json file for code styling.
+If you are contributing to the JavaScript or Typescript Loggers make sure to use the ready .eslintrc.json file for code styling and obviously use the eslint plugin.
 
-If you contribute to python run pylint logger.py the score must always be above 8 anything else will be rejected.
+If you contribute to python run pylint logger.py the score must always be above 8 anything else will be rejected also use the PyLint extension.
 
 # Instalation
 

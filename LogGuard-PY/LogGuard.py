@@ -189,7 +189,7 @@ class Logger:
             if self.__log_file_name in Logger.__open_loggers:
                 self.__log_file = Logger.__open_loggers[self.__log_file_name]
             else:
-                with open(str(self.__log_file_name), "a",encoding="utf-8") as log_file: 
+                with open(str(self.__log_file_name), "a",encoding="utf-8") as log_file:
                     self.__log_file = log_file
                 Logger.__open_loggers[self.__log_file_name] = self.__log_file
                 self.log('info', "Starting")
