@@ -8,7 +8,7 @@ __all__ = ["Logger"]
 
 # Custom __Errors
 class __Errors:
-    """Contains Custom __Errors"""
+    """Contains Custom Errors"""
 
     class FileNotOpen(Exception):
         """FileNotOpen Error"""
@@ -40,8 +40,8 @@ class Logger:
             PathNonExistent: If the log settings file path does not exist.
             UnableToLock: If the script is unable to get a thread lock.
         """
-    _open_loggers_lock = threading.Lock()  # Lock for synchronizing access to open_loggers
-    _open_loggers = {}  # Thread-safe dictionary to store open loggers
+    __open_loggers_lock = threading.Lock()  # Lock for synchronizing access to open_loggers
+    __open_loggers = {}  # Thread-safe dictionary to store open loggers
 
     def __init__(self,
                  output_dir: str = "logs",
@@ -90,7 +90,7 @@ class Logger:
         self.__log_file_type = log_file_type if log_file_type in self.supported_formats else 'log'
         self._file_path = Path.cwd().resolve() if output_dir == "." else Path(output_dir).resolve()
         self.__settings_path = settings_path
-        self._load_json(self.__settings_path)
+        self.__load_json(self.__settings_path)
         if self.__settings:
             self.configured_level_value = self.__settings['LogLevels'][self.log_level]
 
@@ -123,12 +123,12 @@ class Logger:
                             if log_level_value >= self.configured_level_value:
                                 if timestamp:
                                     if context:
-                                        formatted_message = self._formatter(
+                                        formatted_message = self.formatter(
                                                                         level, message,
                                                                            timestamp,
                                                                            context=context)
                                     else:
-                                        formatted_message = self._formatter(level, message,
+                                        formatted_message = self.formatter(level, message,
                                                                            str(timestamp))
 
                                     if formatted_message is not None:
@@ -143,7 +143,7 @@ class Logger:
         else:
             raise __Errors.LockNonExistent("Self.lock is None or false for some reason contact dev ")
 
-    def _formatter(self, level: str, message: str, timestamp: str, context: object = None):
+    def formatter(self, level: str, message: str, timestamp: str, context: object = None):
         """
         Format log message.
 
@@ -179,7 +179,7 @@ class Logger:
         Raises:
             PathNonExistent: If the file path is not found.
         """
-        self.__log_file_name = self._get_log_name()
+        self.__log_file_name = self.__get_log_name()
 
         if self.file_path:
             self.file_path.mkdir(parents=True, exist_ok=True)
@@ -187,18 +187,18 @@ class Logger:
             raise __Errors.PathNonExistent("File path not found")
 
         try:
-            if self.__log_file_name in Logger._open_loggers:
-                self.__log_file = Logger._open_loggers[self.__log_file_name]
+            if self.__log_file_name in Logger.__open_loggers:
+                self.__log_file = Logger.__open_loggers[self.__log_file_name]
             else:
                 with open(str(self.__log_file_name), "a",encoding="utf-8") as log_file: 
                     self.__log_file = log_file
 
-                Logger._open_loggers[self.__log_file_name] = self.__log_file
+                Logger.__open_loggers[self.__log_file_name] = self.__log_file
                 self.log('info', "Starting")
         except IOError:
             sys.stderr.write(f"Error: Unable to open log file {self.__log_file_name}\n")
 
-    def _get_log_name(self):
+    def __get_log_name(self):
         """
         Get the log file name.
 
@@ -212,7 +212,7 @@ class Logger:
             return self.file_path / f"{self.timestamp}.{self.__log_file_type}"
         raise __Errors.PathNonExistent("File path not found")
 
-    def _load_json(self, path: str):
+    def __load_json(self, path: str):
         """
         Load JSON settings.
 
@@ -248,9 +248,9 @@ class Logger:
                 if self.__lock:
                     with self.__lock:
                         self.__log_file.close()
-                        with self._open_loggers_lock:
-                            if self.__log_file_name in self._open_loggers:
-                                del self._open_loggers[self.__log_file_name]
+                        with self.__open_loggers_lock:
+                            if self.__log_file_name in self.__open_loggers:
+                                del self.__open_loggers[self.__log_file_name]
                         self.__log_file = None
                         self.__lock.release()
                 else:

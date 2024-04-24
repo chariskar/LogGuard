@@ -1,5 +1,5 @@
 [MASTER]
-init-hook='import sys; sys.path.append(r"C:\Users\Charis\Documents\GitHub\logger")'
+init-hook='import sys; sys.path.append(r"C:\Users\Charis\Documents\GitHub\LogGuard-PY")'
 
 [MESSAGES CONTROL]
 disable = missing-module-docstring,missing-function-docstring,missing-class-docstring
