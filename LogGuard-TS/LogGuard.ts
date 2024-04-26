@@ -31,7 +31,7 @@ class Logger {
     private configured_level_value: number | null;
     private file_path: string | null;
     private log_file: fs.WriteStream | null;
-    private log_file_name: string;
+    private log_file_name: string | null;
     private timestamp: string | null;
     private supported_formats: string[] = ['log','txt']
     private log_file_type: string
@@ -49,7 +49,9 @@ class Logger {
         // List of supported log file formats
         this.supported_formats = ['log', 'txt'];
         // If settings are available, set configured log level value
-
+        this.configured_level_value = null
+        this.log_file = null
+        this.log_file_name = null
         // Check log file type
         if (this.supported_formats.includes(log_file_type)) {
             // Set log file type
@@ -70,7 +72,7 @@ class Logger {
 
         // Check the settings file path
         this.settings_path = settings_path;
-        this.load_json(this.settings_path);
+        this.settings = this.load_json(this.settings_path);
 
         if (this.settings) {
             this.configured_level_value = this.settings['LogLevels'][this.loglevel];
@@ -208,12 +210,12 @@ class Logger {
     * @throws {PathNonExistant} If the file path does not exist
     * @description Opens json files
     */
-    load_json(path: string): void {
+    load_json(path: string) {
         console.log(path)
 
         if (fs.existsSync(path)) {
             const data: string = fs.readFileSync(path, 'utf8');
-            this.settings = JSON.parse(data);
+            return JSON.parse(data)
         } else {
             throw new PathNonExistant('File path does not exist');
         }
@@ -229,7 +231,7 @@ class Logger {
                 this.log('info', 'Closing file',null);
             } finally {
                 this.log_file.close();
-                delete this.open_loggers[this.log_file_name];
+                delete this.open_loggers[String(this.log_file_name)];
                 this.log_file = null;
             }
         } else {
