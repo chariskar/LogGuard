@@ -211,7 +211,6 @@ class Logger {
     * @description Opens json files
     */
     load_json(path: string) {
-        console.log(path)
 
         if (fs.existsSync(path)) {
             const data: string = fs.readFileSync(path, 'utf8');
