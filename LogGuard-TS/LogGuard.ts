@@ -89,7 +89,7 @@ class Logger {
      * @throws {FileNotOpen} If the settings or the Log file isnt open.
      * @description Logs the message to the log file
      */
-    log(level: string, message: string, context: any): void {
+    log(level: string, message: string, context?: any): void {
         
         const timestamp: string = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '');
         level = level.toUpperCase(); // make the level upper case if it isn't
@@ -168,30 +168,47 @@ class Logger {
      * @description Create the log file in the specified directory.
      */
     create_log_file(): void {
-        this.log_file_name = this.get_log_name(); // get the log file name
+        // Get the log file name
+        this.log_file_name = this.get_log_name();
     
+        // If log path is default or the same, combine loggers
+        const combineLoggers = this.file_path === 'logs' || this.file_path === '.';
+        
         if (this.file_path) {
             fs.mkdirSync(this.file_path, { recursive: true }); // make the log dir if it doesn't exist
         } else {
-            throw new PathNonExistant('File path not found'); // raise an error if file path is  null
+            throw new PathNonExistant('File path not found'); // raise an error if file path is null
         }
     
         try {
-            if (this.log_file_name in this.open_loggers) { // check if there is an already open logger file
-                this.log_file = this.open_loggers[this.log_file_name]; // open that logger file
-            } else {
-                if (!fs.existsSync(this.log_file_name)) { // check if log file exists
-                    fs.writeFileSync(this.log_file_name, ''); // create the log file if it doesn't exist
+            if (!fs.existsSync(this.log_file_name)) { // check if log file exists
+                fs.writeFileSync(this.log_file_name, ''); // create the log file if it doesn't exist
+                if (combineLoggers) {
+                    // Only add starting message if loggers are combined
+                    this.log('info', 'Starting', null);
                 }
+            }
+    
+            if (combineLoggers) {
+                // If loggers are combined, use a shared log file
+                if (!(this.log_file_name in this.open_loggers)) {
+                    this.log_file = fs.createWriteStream(this.log_file_name, { flags: 'a' }); // open the log file
+                    this.open_loggers[this.log_file_name] = this.log_file; // store the opened logger file
+                } else {
+                    this.log_file = this.open_loggers[this.log_file_name]; // use the existing logger file
+                }
+            } else {
+                // If loggers are separate, each logger gets its own log file
                 this.log_file = fs.createWriteStream(this.log_file_name, { flags: 'a' }); // open the log file
                 this.open_loggers[this.log_file_name] = this.log_file; // store the opened logger file
-                this.log('info', 'Starting', null); // set a starting message
+                if (!combineLoggers) {
+                    this.log('info', 'Starting', null); // set a starting message
+                }
             }
         } catch (error) {
-
-            throw new Error(`Unexpected Error ${error}`)
+            throw new Error(`Unexpected Error ${error}`);
         }
-    }
+    }    
 
     /**
      * @throws {PathNonExistant} If file path is null.
