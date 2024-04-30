@@ -168,49 +168,57 @@ class Logger {
      * @description Create the log file in the specified directory.
      */
 	create_log_file(): void {
+		// Determine if the output directory ends with ".log"
+		const outputDirEndsWithLogExtension = this.file_path && this.file_path.endsWith('.log')
+    
 		// Determine the log file name based on the output directory and file extension
-		const logFileName = this.file_path && this.file_path.endsWith('.log') ? this.file_path : this.get_log_name()
+		const logFileName = outputDirEndsWithLogExtension ? this.file_path : this.get_log_name()
     
 		// Determine if loggers with the same or default log path should combine their logs
 		const combineLoggers = this.file_path === 'logs' || this.file_path === '.'
     
 		// Ensure the output directory exists
-		if (this.file_path) {
+		if (this.file_path && !outputDirEndsWithLogExtension) {
 			fs.mkdirSync(this.file_path, { recursive: true }) // Create the log directory if it doesn't exist
-		} else {
+		} else if (!this.file_path) {
 			throw new PathNonExistant('Output directory not specified') // Raise an error if output directory is not specified
 		}
     
 		try {
-			// Check if the log file exists
-			if (!fs.existsSync(logFileName)) {
+			if (logFileName){
+				if (!fs.existsSync(logFileName)) {
 				// Create the log file if it doesn't exist
-				fs.writeFileSync(logFileName, '')
-				// Add a starting message if loggers are combined
-				if (combineLoggers) {
-					this.log('info', 'Starting')
+					fs.writeFileSync(logFileName, '')
+					// Add a starting message if loggers are combined
+					if (combineLoggers) {
+						this.log('info', 'Starting')
+					}
 				}
-			}
     
-			// Open or create the log file based on whether loggers should combine their logs
-			if (combineLoggers) {
-				if (!(logFileName in this.open_loggers)) {
+				// Open or create the log file based on whether loggers should combine their logs
+				if (combineLoggers) {
+					if (!(logFileName in this.open_loggers)) {
+						this.log_file = fs.createWriteStream(logFileName, { flags: 'a' })
+						this.open_loggers[logFileName] = this.log_file
+					} else {
+						this.log_file = this.open_loggers[logFileName]
+					}
+				} else {
 					this.log_file = fs.createWriteStream(logFileName, { flags: 'a' })
 					this.open_loggers[logFileName] = this.log_file
-				} else {
-					this.log_file = this.open_loggers[logFileName]
-				}
-			} else {
-				this.log_file = fs.createWriteStream(logFileName, { flags: 'a' })
-				this.open_loggers[logFileName] = this.log_file
-				if (!combineLoggers) {
-					this.log('info', 'Starting')
-				}
-			}
+					if (!combineLoggers) {
+						this.log('info', 'Starting')
+					}
+				}}
+            
+			// Check if the log file exists
+			
 		} catch (error) {
 			throw new Error(`Error while creating log file: ${error}`)
 		}
 	}
+    
+    
     
 
 	/**
