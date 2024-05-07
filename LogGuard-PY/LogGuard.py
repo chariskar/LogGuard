@@ -1,6 +1,5 @@
 """LogGuard Module"""
 import datetime
-import sys
 from pathlib import Path
 import threading
 import json
@@ -171,30 +170,55 @@ class Logger:
             return formatted_message + "\n"
         raise Errors.FileNotOpen('Settings file is not open')
 
-    def __create_log_file(self):
+    def create_log_file(self):
         """
-        Generate the log file.
+        Create the log file in the specified directory.
 
         Raises:
-            PathNonExistent: If the file path is not found.
+            PathNonExistent: If the path is null.
         """
-        self.__log_file_name = self.__get_log_name()
+        # Determine if the output directory ends with ".log"
+        output_dir_ends_with_log_extension = self.file_path and self.file_path.endswith('.log')
 
-        if self.file_path:
-            self.file_path.mkdir(parents=True, exist_ok=True)
-        else:
-            raise Errors.PathNonExistent("File path not found")
+        # Determine the log file name based on the output directory and file extension
+        log_file_name = self.file_path if output_dir_ends_with_log_extension else self.get_log_name()
+
+        # Determine if loggers with the same or default log path should combine their logs
+        combine_loggers = self.file_path in ['logs', '.']
+
+        # Ensure the output directory exists
+        if self.file_path and not output_dir_ends_with_log_extension:
+            Path(self.file_path).mkdir(parents=True, exist_ok=True)  # Create the log directory if it doesn't exist
+        elif not self.file_path:
+            raise Errors.PathNonExistent(
+                'Output directory not specified')  # Raise an error if output directory is not specified
 
         try:
-            if self.__log_file_name in Logger.__open_loggers:
-                self.__log_file = Logger.__open_loggers[self.__log_file_name]
-            else:
-                with open(str(self.__log_file_name), "a",encoding="utf-8") as log_file:
-                    self.__log_file = log_file
-                Logger.__open_loggers[self.__log_file_name] = self.__log_file
-                self.log('info', "Starting")
-        except IOError:
-            sys.stderr.write(f"Error: Unable to open log file {self.__log_file_name}\n")
+            if log_file_name:
+                if not Path(log_file_name).exists():
+                    # Create the log file if it doesn't exist
+                    with open(log_file_name, 'w', encoding='utf-8') as f:
+                        f.write("Starting \n")  # Initial message or setup operation
+                        # Add a starting message if loggers are combined
+                        if combine_loggers:
+                            self.log('info', 'Starting')
+
+                # Open or create the log file based on whether loggers should combine their logs
+                if combine_loggers:
+                    if log_file_name not in Logger.__open_loggers:
+                        self.__log_file = open(log_file_name, 'a', encoding='utf-8')
+                        Logger.__open_loggers[log_file_name] = self.__log_file
+                    else:
+                        self.__log_file = Logger.__open_loggers[log_file_name]
+                else:
+                    self.__log_file = open(log_file_name, 'a', encoding='utf-8')
+                    Logger.__open_loggers[log_file_name] = self.__log_file
+                    if not combine_loggers:
+                        self.log('info', 'Starting')
+
+        except Exception as e:
+            raise Exception(f"Error while creating log file: {e}")
+
 
     def __get_log_name(self):
         """
@@ -210,7 +234,7 @@ class Logger:
             return self.file_path / f"{self.timestamp}.{self.__log_file_type}"
         raise Errors.PathNonExistent("File path not found")
 
-    def __load_json(self, path: str):
+    def __load_json(self, path: str) -> None:
         """
         Load JSON settings.
 
