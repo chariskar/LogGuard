@@ -1,11 +1,11 @@
 import * as fs from 'fs'
 import * as path from 'path'
-
+import type {PluginType} from './Plugins.d.ts'
 
 class FileNotOpen extends Error {} // FileNotOpen Error
 class PathNonExistant extends Error {} // PathNonExistant Error
+class PluginLoadingError extends Error{}
 
-// Settings format
 interface Settings{
     LogLevels: {
         [key: string]: number;
@@ -14,6 +14,7 @@ interface Settings{
         [key: string]: string;
     };
 }
+
 
 class Logger {
 	/**
@@ -36,51 +37,40 @@ class Logger {
 	private supported_formats: string[] = ['log','txt']
 	private log_file_type: string
 	private settings_path: string
+	private pluginsPath: string
+	private plugins: PluginType[]
+	public UsedPlugins: PluginType | PluginType[]
 
-	constructor(output_dir: string = 'logs', log_file_type: string = 'log', settings_path: string = 'log_settings.json', LogLevel: string = 'INFO') {
-		// Set log level to upper case
-		this.loglevel = LogLevel.toUpperCase()
-		// Initialise variables.
+	constructor(
+		output_dir: string = 'logs',
+		log_file_type: string = 'log',
+		settings_path: string = 'log_settings.json',
+		LogLevel: string = 'INFO',
+		pluginsPath: string = './Plugins',
+		UsedPlugins: PluginType[] | PluginType = []
+	) {
+		this.loglevel = LogLevel.toUpperCase();
+        this.timestamp = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '');
+        this.supported_formats = ['log', 'txt'];
+        this.configured_level_value = null;
+        this.log_file = null;
+        this.log_file_name = null;
 
-
-		// Assign values
-		// Set timestamp to current date and time in the specified format
-		this.timestamp = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '')
-		// List of supported log file formats
-		this.supported_formats = ['log', 'txt']
-		// If settings are available, set configured log level value
-		this.configured_level_value = null
-		this.log_file = null
-		this.log_file_name = null
-		// Check log file type
-		if (this.supported_formats.includes(log_file_type)) {
-			// Set log file type
-			this.log_file_type = log_file_type
-		} else {
-			// Raise an error if log file type is not supported
-			throw new Error('Log file type isn\'t supported')
-		}
-
-		// Check for the output directory
-		if (output_dir === '.') {
-			// If output directory is current directory, set file path to current working directory
-			this.file_path = path.resolve()
-		} else {
-			// Otherwise, set file path to specified directory
-			this.file_path = path.resolve(output_dir)
-		}
-
-		// Check the settings file path
-		this.settings_path = settings_path
-		this.settings = this.load_json(this.settings_path)
-
-		if (this.settings) {
-			this.configured_level_value = this.settings['LogLevels'][this.loglevel]
-		}
-
-		// Create the log file
-		this.create_log_file() // Ensure log file is created during initialization
-	}
+        if (!this.supported_formats.includes(log_file_type)) {
+            throw new Error('Log file type isn\'t supported');
+        }
+        this.log_file_type = log_file_type;
+        this.file_path = output_dir === '.' ? path.resolve() : path.resolve(output_dir);
+        this.settings_path = settings_path;
+        this.settings = this.load_json(this.settings_path);
+        if (this.settings) {
+            this.configured_level_value = this.settings['LogLevels'][this.loglevel];
+        }
+        this.pluginsPath = pluginsPath;
+        this.UsedPlugins = UsedPlugins;
+        this.plugins = this.loadPlugins();
+        this.create_log_file();
+    }
 
 	/**
      * @param {string} [level] - The log level (e.g., 'INFO', 'DEBUG').
@@ -138,30 +128,42 @@ class Logger {
     * @returns {string} The formated message
     * @description Format the message
     */
-	Formatter(level: string, message: string, timestamp: string,  context?: undefined): string {
+	Formatter(level: string, message: string, timestamp: string, context?: undefined): string {
+		let formattedMessage: string = '';
+	
 		if (this.settings) {
-			if (context) {
-				// get the formats and then replace  placeholders with values
-				const format_template: string = this.settings['Formats']['Context']
-				const formatted_message: string = format_template
-					.replace('{level}', level)
-					.replace('{message}', message)
-					.replace('{timestamp}', timestamp)
-					.replace('{context}', context)
-				return formatted_message + '\n'
-                
+			if (this.hasPlugin(this.UsedPlugins, 'Formatter')) {
+				const formatterPlugin = this.plugins.find(plugin => 'Formatter' in plugin);
+				if (formatterPlugin) {
+					formattedMessage = formatterPlugin.Formatter(level, message, timestamp, context);
+				}
 			} else {
-				const format_template: string = this.settings['Formats']['NonContext']
-				const formatted_message: string = format_template
-					.replace('{level}', level)
-					.replace('{message}', message)
-					.replace('{timestamp}', timestamp)
-				return formatted_message + '\n'
+				if (context) {
+					// get the formats and then replace placeholders with values
+					const format_template: string = this.settings['Formats']['Context'];
+					formattedMessage = format_template
+						.replace('{level}', level)
+						.replace('{message}', message)
+						.replace('{timestamp}', timestamp)
+						.replace('{context}', context);
+				} else {
+					const format_template: string = this.settings['Formats']['NonContext'];
+					formattedMessage = format_template
+						.replace('{level}', level)
+						.replace('{message}', message)
+						.replace('{timestamp}', timestamp);
+				}
+			}
+	
+			if (formattedMessage !== undefined) {
+				return formattedMessage + '\n';
 			}
 		} else {
-			throw new FileNotOpen('Settings file is not open')
+			throw new FileNotOpen('Settings file is not open');
 		}
+			throw new Error('Formatter function reached an unexpected state.');
 	}
+	
 
 	/**
      * @throws {PathNonExistant} If the the path is null.
@@ -218,9 +220,27 @@ class Logger {
 		}
 	}
     
-    
-    
-
+    /**
+	 * @returns {Plugin[] | Plugin} - Returns the Plugins
+	 */
+    loadPlugins(): Plugin[] {
+        const plugins: Plugin[] = [];
+        const files = fs.readdirSync(this.pluginsPath);
+        for (const file of files) {
+            if (file.endsWith('.ts')) {
+                const pluginPath = path.join(this.pluginsPath, file);
+                const pluginModule = require(pluginPath);
+                if (pluginModule && pluginModule.default && typeof pluginModule.default === 'function' && pluginModule.default.prototype.execute) {
+                    const pluginInstance = new pluginModule.default();
+                    plugins.push(pluginInstance);
+                    this.UsedPlugins = [this.UsedPlugins, pluginInstance];
+                } else {
+                    throw new PluginLoadingError(`Unable to load plugin ${pluginPath}`);
+                }
+            }
+        }
+        return plugins;
+    }
 	/**
      * @throws {PathNonExistant} If file path is null.
      * @description Get the full path of the log file.
@@ -245,6 +265,20 @@ class Logger {
 			return JSON.parse(data)
 		} else {
 			throw new PathNonExistant('File path does not exist')
+		}
+	}
+
+	/**
+	 * @param {PluginType | PluginType[]} plugins - The plugin or array of plugins to check.
+	 * @param {string} methodName - The name of the method to check for.
+	 * @returns {plugins is Formatter} True if the plugin or plugins have the specified method.
+	 * @description Type guard to check if the plugin or plugins have the specified method.
+	 */
+	hasPlugin(plugins: PluginType | PluginType[], methodName: string): plugins is PluginType {
+		if (Array.isArray(plugins)) {
+			return plugins.some(plugin => methodName in plugin);
+		} else {
+			return methodName in plugins;
 		}
 	}
 
