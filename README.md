@@ -1,22 +1,6 @@
 # Logger 
 
-All loggers have the exact same usage for example.
 
-# Python
-
-  from LogGuard import Logger
-  
-  logger = Logger()
-
-  logger.log('info','Hello')
-
-# JavaScript
-
-  import * as Logger from './Logger' or import * as Logger from 'Logger' if it is installed as a module
-  
-  const logger = new Logger.Logger()
-
-  logger.log('info','hello')
 
 # TypeScript
 
@@ -25,6 +9,9 @@ All loggers have the exact same usage for example.
   const logger = new Logger.Logger()
 
   logger.log('info','hello')
+
+# Plugins
+  When calling the Logger point to a valid folder that contains the plugin files and then update the UsedPlugins variable to contain all the plugins you will be using
 
 # Contribute
 
