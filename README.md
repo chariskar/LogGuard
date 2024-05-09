@@ -2,29 +2,7 @@
 
 All loggers have the exact same usage for example.
 
-# Python
-
-  from logger import Logger
-  
-  logger = Logger()
-
-  logger.log('info','Hello')
-
-# JavaScript
-
-  import * as Logger from './Logger' or import * as Logger from 'Logger' if it is installed as a module
-  
-  const logger = new Logger.Logger()
-
-  logger.log('info','hello')
-
-# TypeScript
-
-  import * as Logger from './Logger' or import * as Logger from 'Logger' if it is installed as a module
-  
-  const logger = new Logger.Logger()
-
-  logger.log('info','hello')
+Main branch contains the stable versions of the loggers their own branches contain beta/alpha versions
 
 # Contribute
 
