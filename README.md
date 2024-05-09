@@ -10,21 +10,6 @@ All loggers have the exact same usage for example.
 
   logger.log('info','Hello')
 
-# JavaScript
-
-  import * as Logger from './Logger' or import * as Logger from 'Logger' if it is installed as a module
-  
-  const logger = new Logger.Logger()
-
-  logger.log('info','hello')
-
-# TypeScript
-
-  import * as Logger from './Logger' or import * as Logger from 'Logger' if it is installed as a module
-  
-  const logger = new Logger.Logger()
-
-  logger.log('info','hello')
 
 # Contribute
 
@@ -37,3 +22,7 @@ If you contribute to python run pylint logger.py the score must always be above 
 # Instalation
 
 I decided to not put the code on any package manager (they did not want to work for some reason) so to install them you just grab the files you want for example the logger file and the log_settings.json file or the styling files if you like
+
+
+# Important 
+  The Loggers inside their own branches are the alpha/beta versions the stable versions are in the main branch

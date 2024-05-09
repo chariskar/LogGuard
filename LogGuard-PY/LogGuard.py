@@ -1,8 +1,10 @@
-"""LogGuard Module"""
+"""Logger Module"""
 import datetime
 from pathlib import Path
 import threading
 import json
+from typing import List,Union
+from Types import Plugin,PluginType,Formatter,Log,LoadJson,CreateLogFile,Close,GetLogFileName
 
 __all__ = ["Logger"]
 __author__ = 'Charilaos Karametos'
@@ -23,6 +25,8 @@ class Errors:
 
     class LockNonExistent(Exception):
         """LockNonExistent Error"""
+    class PluginLoadingError(Exception):
+        """Unable to load plugin."""
 
 
 class Logger:
@@ -46,10 +50,13 @@ class Logger:
     __open_loggers = {}  # Thread-safe dictionary to store open loggers
 
     def __init__(self,
-                 output_dir: str = "logs",
-                 log_file_type: str = "log",
-                 settings_path: str = './log_settings.json',
-                 log_level: str = 'INFO'):
+                output_dir: str = "logs",
+                log_file_type: str = "log",
+                settings_path: str = './log_settings.json',
+                log_level: str = 'INFO',
+                UsedPlugins: Union[PluginType, List[PluginType], None] = None,
+            	pluginsPath: str = './Plugins',
+                ):
         """
         Initialize Logger instance.
 
@@ -85,8 +92,8 @@ class Logger:
         self.__log_file = None
         self.__log_file_name = None
         self._timestamp = None
-
-        # Assign values
+        self.UsedPlugins = None
+        self.PluginPath = None        # Assign values
         self.timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         self.supported_formats = ["log", "txt"]
         self.__log_file_type = log_file_type if log_file_type in self.supported_formats else 'log'
@@ -95,9 +102,11 @@ class Logger:
         self.__load_json(self.__settings_path)
         if self.__settings:
             self.configured_level_value = self.__settings['LogLevels'][self.log_level]
-
+        self.UsedPlugins = UsedPlugins
+        self.PluginPath = pluginsPath
+        self.plugins: List[PluginType] = self.load_plugins()
         # Create the log file
-        self.__create_log_file()
+        self.create_log_file()
 
     def log(self, level: str, message: str, context=None):
         """
@@ -119,23 +128,28 @@ class Logger:
         if self.__lock:
             with self.__lock:
                 if self.__settings and self.__log_file:
-                    log_level_value = self.__settings['LogLevels'][level]
-                    if log_level_value and self.configured_level_value:
-                        if log_level_value >= self.configured_level_value:
-                            if timestamp:
-                                if context:
-                                    formatted_message = self.formatter(
-                                                                    level, message,
-                                                                       timestamp,
-                                                                       context=context)
-                                else:
-                                    formatted_message = self.formatter(level, message,
-                                                                       str(timestamp))
-                                if formatted_message is not None:
-                                    self.__log_file.write(formatted_message)
-                                    self.__log_file.flush()
-                        else:
-                            pass
+                    if self.has_plugin(self.plugins,'Log'):
+                        plugin = next((plugin for plugin in self.plugins if hasattr(plugin, 'Log')), None)
+                        if plugin and hasattr(plugin, 'Log') and isinstance(plugin, Log):
+                            return plugin.func(level, message, timestamp, context=context)
+                    else:
+                        log_level_value = self.__settings['LogLevels'][level]
+                        if log_level_value and self.configured_level_value:
+                            if log_level_value >= self.configured_level_value:
+                                if timestamp:
+                                    if context:
+                                        formatted_message = self.formatter(
+                                                                        level, message,
+                                                                        timestamp,
+                                                                        context=context)
+                                    else:
+                                        formatted_message = self.formatter(level, message,
+                                                                        str(timestamp))
+                                    if formatted_message is not None:
+                                        self.__log_file.write(formatted_message)
+                                        self.__log_file.flush()
+                            else:
+                                pass
                 else:
                     raise Errors.FileNotOpen('Settings or Log File  file is not open')
 
@@ -159,14 +173,18 @@ class Logger:
             FileNotOpen: If the settings file is not open.
         """
         if self.__settings:
+            if self.has_plugin(self.plugins, 'Formatter'):
+                plugin = next((plugin for plugin in self.plugins if hasattr(plugin, 'Formatter')), None)
+                if plugin and hasattr(plugin, 'Formatter') and isinstance(plugin, Formatter):
+                    return plugin.func(level, message, timestamp,self.__settings, context=context)
             if context:
                 format_template = self.__settings['Formats']['Context']
                 formatted_message = format_template.format(level=level, message=message,
-                                                           timestamp=timestamp, context=context)
+                                                        timestamp=timestamp, context=context)
             else:
                 format_template = self.__settings['Formats']['NonContext']
-                formatted_message = format_template.format(level=level, message=message
-                                                           , timestamp=timestamp)
+                formatted_message = format_template.format(level=level, message=message,
+                                                        timestamp=timestamp)
             return formatted_message + "\n"
         raise Errors.FileNotOpen('Settings file is not open')
 
@@ -177,64 +195,70 @@ class Logger:
         Raises:
             PathNonExistent: If the path is null.
         """
+        
         # Determine if the output directory ends with ".log"
-        output_dir_ends_with_log_extension = self.file_path and self.file_path.endswith('.log')
+        endsWithLog = self.file_path and self.file_path.endswith('.log')
 
         # Determine the log file name based on the output directory and file extension
-        log_file_name = self.file_path if output_dir_ends_with_log_extension else self.get_log_name()
+        log_file_name = self.file_path if endsWithLog else self.get_log_name()
 
         # Determine if loggers with the same or default log path should combine their logs
         combine_loggers = self.file_path in ['logs', '.']
+        if self.has_plugin(self.plugins, 'CreateLogFile'):
+                plugin = next((plugin for plugin in self.plugins if hasattr(plugin, 'CreateLogFile')), None)
+                
+                if plugin and hasattr(plugin, 'CreateLogFile') and isinstance(plugin, CreateLogFile):
+                    
+                    return plugin.func(log_file_name,endsWithLog,combine_loggers)
+        else:
+            # Ensure the output directory exists
+            if self.file_path and not endsWithLog:
+                
+                Path(self.file_path).mkdir(parents=True, exist_ok=True)  # Create the log directory if it doesn't exist
+            elif not self.file_path:
+                
+                raise Errors.PathNonExistent('Output directory not specified')  # Raise an error if output directory is not specified
 
-        # Ensure the output directory exists
-        if self.file_path and not output_dir_ends_with_log_extension:
-            Path(self.file_path).mkdir(parents=True, exist_ok=True)  # Create the log directory if it doesn't exist
-        elif not self.file_path:
-            raise Errors.PathNonExistent(
-                'Output directory not specified')  # Raise an error if output directory is not specified
+            try:
+                if log_file_name:
+                    if not Path(log_file_name).exists():
+                        # Create the log file if it doesn't exist
+                        with open(log_file_name, 'w', encoding='utf-8') as f:
+                            f.write("Starting \n")  # Initial message or setup operation
+                            # Add a starting message if loggers are combined
+                            if combine_loggers:
+                                self.log('info', 'Starting')
 
-        try:
-            if log_file_name:
-                if not Path(log_file_name).exists():
-                    # Create the log file if it doesn't exist
-                    with open(log_file_name, 'w', encoding='utf-8') as f:
-                        f.write("Starting \n")  # Initial message or setup operation
-                        # Add a starting message if loggers are combined
-                        if combine_loggers:
-                            self.log('info', 'Starting')
-
-                # Open or create the log file based on whether loggers should combine their logs
-                if combine_loggers:
-                    if log_file_name not in Logger.__open_loggers:
+                    # Open or create the log file based on whether loggers should combine their logs
+                    if combine_loggers:
+                        if log_file_name not in Logger.__open_loggers:
+                            self.__log_file = open(log_file_name, 'a', encoding='utf-8')
+                            Logger.__open_loggers[log_file_name] = self.__log_file
+                        else:
+                            self.__log_file = Logger.__open_loggers[log_file_name]
+                    else:
                         self.__log_file = open(log_file_name, 'a', encoding='utf-8')
                         Logger.__open_loggers[log_file_name] = self.__log_file
-                    else:
-                        self.__log_file = Logger.__open_loggers[log_file_name]
-                else:
-                    self.__log_file = open(log_file_name, 'a', encoding='utf-8')
-                    Logger.__open_loggers[log_file_name] = self.__log_file
-                    if not combine_loggers:
-                        self.log('info', 'Starting')
+                        if not combine_loggers:
+                            self.log('info', 'Starting')
 
-        except Exception as e:
-            raise Exception(f"Error while creating log file: {e}")
+            except Exception as e:
+                raise Exception(f"Error while creating log file: {e}")
+
+    def get_log_name(self):
+        if self.has_plugin(self.UsedPlugins, 'GetLogFileName'):
+            if self.plugins:
+                plugin = next((plugin for plugin in self.plugins if hasattr(plugin, 'GetLogFileName')), None)
+                if plugin and hasattr(plugin, 'GetLogFileName') and isinstance(plugin, GetLogFileName):
+                    return plugin.func()
+        else:
+            if self.file_path:
+                return str(self.file_path.resolve() / f"{self.timestamp}.{self.__log_file_type}")
+            raise Errors.PathNonExistent('File path not found')
 
 
-    def __get_log_name(self):
-        """
-        Get the log file name.
 
-        Returns:
-            str: The log file path and the name of it.
-
-        Raises:
-            PathNonExistent: If file path is not found.
-        """
-        if self.file_path:
-            return self.file_path / f"{self.timestamp}.{self.__log_file_type}"
-        raise Errors.PathNonExistent("File path not found")
-
-    def __load_json(self, path: str) -> None:
+    def __load_json(self, path: str):
         """
         Load JSON settings.
 
@@ -247,6 +271,11 @@ class Logger:
         """
         if self.__lock:
             with self.__lock:
+                if self.has_plugin(self.UsedPlugins, 'LoadJson'):
+                    if self.plugins:
+                        plugin = next((plugin for plugin in self.plugins if hasattr(plugin, 'LoadJson')), None)
+                        if plugin and hasattr(plugin, 'LoadJson') and isinstance(plugin, LoadJson):
+                            return plugin.func()
                 if Path(path).resolve():
                     with open(path, 'r',encoding="utf-8") as f:
                         self.__settings = json.load(f)
@@ -255,6 +284,32 @@ class Logger:
         else:
             raise Errors.LockNonExistent('Thread lock does not exist, please contact dev')
 
+    def load_plugins(self) -> List[PluginType]:
+        plugins: List[Plugin] = []
+        if self.PluginPath:
+            files = Path(self.PluginPath).iterdir()
+            for file in files:
+                if file.suffix == '.py':
+                    plugin_module = __import__(file.stem)
+                    if plugin_module and hasattr(plugin_module, '__call__') and hasattr(plugin_module, 'execute'):
+                        plugin_instance = plugin_module()
+                        plugins.append(plugin_instance)
+                        if isinstance(self.UsedPlugins, list):
+                            self.UsedPlugins.append(plugin_instance)
+                        else:
+                            self.UsedPlugins = [plugin_instance]
+                    else:
+                        raise Errors.PluginLoadingError(f"Unable to load plugin {file}")
+        return plugins or []  # Handle the case where plugins is None
+    
+    @staticmethod
+    def has_plugin(plugins: Union[PluginType, list[PluginType]], method_name: str) -> bool:
+
+        if isinstance(plugins, list):
+            return any(method_name in plugin.__dict__ for plugin in plugins)
+        else:
+            return method_name in plugins.__dict__
+        
     def close(self):
         """
         Close the current log file.
@@ -264,6 +319,10 @@ class Logger:
             LockNonExistent: If the script doesn't have a lock.
         """
         if self.__log_file:
+            if self.has_plugin(self.plugins, 'Close'):
+                plugin = next((plugin for plugin in self.plugins if hasattr(plugin, 'Close')), None)
+                if plugin and hasattr(plugin, 'Close') and isinstance(plugin, Close):
+                    return plugin.func(self.__log_file)
             try:
                 self.log('info', "Closing file")
             finally:
