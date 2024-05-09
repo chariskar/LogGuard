@@ -1,216 +1,236 @@
-import * as fs from 'fs';
-import * as path from 'path';
+import fs from 'fs';
+import path from 'path';
 
-class FileNotOpen extends Error {} // FileNotOpen Error
-class PathNonExistant extends Error {} // PathNonExistant Error
-
+class FileNotOpen extends Error {} 
+class PathNonExistant extends Error {} 
+class PluginLoadingError extends Error {}
 
 class Logger {
-    /**
-     * @param {string} [output_dir='logs'] - The directory where log files will be stored.
-     * @param {string} [log_file_type='log'] - The type of log file (e.g., 'log', 'txt').
-     * @param {string} [settings_path='./log_settings.json'] - The path to the log settings file.
-     * @param {string} [LogLevel='INFO'] - The log level (e.g., 'INFO', 'DEBUG') to be ignored.
-     * @throws {Error} If the log file type isnt supported.
-     * @description  The logger class
-     */
-    
-    constructor(output_dir = 'logs', log_file_type = 'log', settings_path = './log_settings.json', LogLevel = 'INFO') {
-        // Set log level to upper case
+    constructor(
+        output_dir = 'logs',
+        log_file_type = 'log',
+        settings_path = 'log_settings.json',
+        LogLevel = 'INFO',
+        pluginsPath = './Plugins',
+        UsedPlugins = []
+    ) {
         this.loglevel = LogLevel.toUpperCase();
-        this.open_loggers = {}
-        // Initialise variables
-        this.settings = null;
+        this.timestamp = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '');
+        this.supported_formats = ['log', 'txt'];
         this.configured_level_value = null;
-        this.file_path = null;
         this.log_file = null;
         this.log_file_name = null;
-        this.timestamp = null;
 
-        // Assign values
-        // Set timestamp to current date and time in the specified format
-        this.timestamp = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '');
-        // List of supported log file formats
-        this.supported_formats = ['log', 'txt'];
-        // If settings are available, set configured log level value
-
-        // Check log file type
-        if (this.supported_formats.includes(log_file_type)) {
-            // Set log file type
-            this.log_file_type = log_file_type;
-        } else {
-            // Raise an error if log file type is not supported
+        if (!this.supported_formats.includes(log_file_type)) {
             throw new Error('Log file type isn\'t supported');
         }
-
-        // Check for the output directory
-        if (output_dir === '.') {
-            // If output directory is current directory, set file path to current working directory
-            this.file_path = path.resolve();
-        } else {
-            // Otherwise, set file path to specified directory
-            this.file_path = path.resolve(output_dir);
-        }
-
-        // Check the settings file path
+        this.log_file_type = log_file_type;
+        this.file_path = output_dir === '.' ? path.resolve() : path.resolve(output_dir);
         this.settings_path = settings_path;
-        this.load_json(this.settings_path);
-
+        this.settings = this.load_json(this.settings_path);
         if (this.settings) {
             this.configured_level_value = this.settings['LogLevels'][this.loglevel];
         }
-
-        // Create the log file
-        this.create_log_file(); // Ensure log file is created during initialization
+        this.pluginsPath = pluginsPath;
+        this.UsedPlugins = UsedPlugins;
+        this.plugins = this.loadPlugins();
+        this.create_log_file();
     }
 
-    /**
-     * @param {string} level - The log level (e.g., 'INFO', 'DEBUG').
-     * @param {string} message - The message to log.
-     * @param {*} [context=null] - Additional context for the log message.
-     * @throws {FileNotOpen} If the settings or the Log file isnt open.
-     * @description Logs the message to the log file
-     */
-    log(level, message, context = null) {
-        const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '');
-        level = level.toUpperCase(); // make the level upper case if it isn't
+    log(level, message, context) {
+        if (this.hasPlugin(this.UsedPlugins, 'log')){
+            const plugin = this.plugins.find(plugin => 'log' in plugin);
+            plugin.log(level, message, context);
+        } else{
+            const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '');
+            level = level.toUpperCase();
 
-        if (this.log_file) { // if the log file exists
-            if (this.settings) { // if the self.settings variable is not null
-                const log_level_value = this.settings['LogLevels'][level];
+            if (this.log_file) {
+                if (this.settings) {
+                    const log_level_value = this.settings['LogLevels'][level];
 
-                if (log_level_value && this.configured_level_value) {
-                    // check that the configured log level is lower than the given log level
-                    if (log_level_value >= this.configured_level_value) {
-                        if (timestamp) {
-                            // write the formatted message to the log file
-                            if (context) {
-                                const formatted_message = this.Formatter(level, message, timestamp, true, context);
-                                if (formatted_message !== null) {
-                                    this.log_file.write(formatted_message);
-                                    
-                                }
-                            } else {
-                                const formatted_message = this.Formatter(level, message, timestamp);
-                                if (formatted_message !== null) {
-                                    this.log_file.write(formatted_message);
-                                    
+                    if (log_level_value && this.configured_level_value) {
+                        if (log_level_value >= this.configured_level_value) {
+                            if (timestamp) {
+                                if (context) {
+                                    const formatted_message = this.Formatter(level, message, timestamp, context);
+                                    if (formatted_message !== null) {
+                                        this.log_file.write(formatted_message);
+                                    }
+                                } else {
+                                    const formatted_message = this.Formatter(level, message, timestamp);
+                                    if (formatted_message !== null) {
+                                        this.log_file.write(formatted_message);
+                                    }
                                 }
                             }
                         }
                     }
                 } else {
-                    // Log level is lower than configured level, do nothing
+                    throw new FileNotOpen('Settings file is not open');
                 }
             } else {
-                throw new FileNotOpen('Settings file is not open');
+                throw new FileNotOpen('Log file is not open');
             }
-        } else {
-            throw new FileNotOpen('Log file is not open');
-        }
+        }        
     }
 
-    /**
-    * @param {string} [level] -The severity level.
-    * @param {string} [message] - The message to be logged.
-    * @param {string} [timestamp] - The time at which the message was logged.
-    * @param {any} [context] - The context to be logged.
-    * @throws {FileNotOpen} If the settings file is not open.
-    * @description Format the message
-    */
-    Formatter(level, message, timestamp, context_value = false, context = null) {
+    Formatter(level, message, timestamp, context) {
+        let formattedMessage = '';
+        
         if (this.settings) {
-            if (context_value) {
+            if (this.hasPlugin(this.UsedPlugins, 'Formatter')) {
+                const formatterPlugin = this.plugins.find(plugin => 'Formatter' in plugin);
+                if (formatterPlugin) {
+                    formattedMessage = formatterPlugin.Formatter(level, message, timestamp, context);
+                }
+            } else {
                 if (context) {
                     const format_template = this.settings['Formats']['Context'];
-                    const formatted_message = format_template.replace('{level}', level)
+                    formattedMessage = format_template
+                        .replace('{level}', level)
                         .replace('{message}', message)
                         .replace('{timestamp}', timestamp)
                         .replace('{context}', context);
-                    return formatted_message + '\n';
+                } else {
+                    const format_template = this.settings['Formats']['NonContext'];
+                    formattedMessage = format_template
+                        .replace('{level}', level)
+                        .replace('{message}', message)
+                        .replace('{timestamp}', timestamp);
                 }
-            } else {
-                const format_template = this.settings['Formats']['NonContext'];
-                const formatted_message = format_template
-                    .replace('{level}', level)
-                    .replace('{message}', message)
-                    .replace('{timestamp}', timestamp);
-                return formatted_message + '\n';
+            }
+
+            if (formattedMessage !== undefined) {
+                return formattedMessage + '\n';
             }
         } else {
             throw new FileNotOpen('Settings file is not open');
         }
+        throw new Error('Formatter function reached an unexpected state.');
     }
 
-    /**
-     * @throws {PathNonExistant} If the the path is null.
-     * @description Create the log file in the specified directory.
-     */
     create_log_file() {
-        this.log_file_name = this.get_log_name(); // get the log file name
-    
-        if (this.file_path) {
-            fs.mkdirSync(this.file_path, { recursive: true }); // make the log dir if it doesn't exist
-        } else {
-            throw new PathNonExistant('File path not found'); // raise an error if file path is  null
-        }
-    
-        try {
-            if (this.log_file_name in this.open_loggers) { // check if there is an already open logger file
-                this.log_file = this.open_loggers[this.log_file_name]; // open that logger file
-            } else {
-                if (!fs.existsSync(this.log_file_name)) { // check if log file exists
-                    fs.writeFileSync(this.log_file_name, ''); // create the log file if it doesn't exist
-                }
-                this.log_file = fs.createWriteStream(this.log_file_name, { flags: 'a' }); // open the log file
-                this.open_loggers[this.log_file_name] = this.log_file; // store the opened logger file
-                this.log('info', 'Starting'); // set a starting message
+        if (this.hasPlugin(this.UsedPlugins, 'create_log_file')){
+            const plugin =  this.plugins.find(plugin => 'create_log_file' in plugin);
+            plugin.create_log_file();
+        } else{
+            const outputDirEndsWithLogExtension = this.file_path && this.file_path.endsWith('.log');
+            const logFileName = outputDirEndsWithLogExtension ? this.file_path : this.get_log_name();
+            const combineLoggers = this.file_path === 'logs' || this.file_path === '.';
+            
+            if (this.file_path && !outputDirEndsWithLogExtension) {
+                fs.mkdirSync(this.file_path, { recursive: true });
+            } else if (!this.file_path) {
+                throw new PathNonExistant('Output directory not specified');
             }
-        } catch (error) {
-           
-            throw new Error(`Unexpected Error ${error}`); 
+            
+            try {
+                if (logFileName){
+                    if (!fs.existsSync(logFileName)) {
+                        fs.writeFileSync(logFileName, '');
+                        if (combineLoggers) {
+                            this.log('info', 'Starting');
+                        }
+                    }
+                    
+                    if (combineLoggers) {
+                        if (!(logFileName in this.open_loggers)) {
+                            this.log_file = fs.createWriteStream(logFileName, { flags: 'a' });
+                            this.open_loggers[logFileName] = this.log_file;
+                        } else {
+                            this.log_file = this.open_loggers[logFileName];
+                        }
+                    } else {
+                        this.log_file = fs.createWriteStream(logFileName, { flags: 'a' });
+                        this.open_loggers[logFileName] = this.log_file;
+                        if (!combineLoggers) {
+                            this.log('info', 'Starting');
+                        }
+                    }
+                }
+            } catch (error) {
+                throw new Error(`Error while creating log file: ${error}`);
+            }
         }
     }
-     
-    /**
-     * @throws {PathNonExistant} If file path is null
-     * @description Get the full path of the log file
-     */
+    
+    loadPlugins() {
+        const plugins = [];
+
+        const files = fs.readdirSync(this.pluginsPath);
+
+        for (const file of files) {
+
+            if (file.endsWith('.ts')) {
+
+                const pluginPath = path.join(this.pluginsPath, file);
+                const pluginModule = require(pluginPath);
+                if (pluginModule && pluginModule.default && typeof pluginModule.default === 'function' && pluginModule.default.prototype.execute) {
+
+                    const pluginInstance = new pluginModule.default();
+
+                    plugins.push(pluginInstance);
+
+                    this.UsedPlugins = [this.UsedPlugins, pluginInstance];
+                } else {
+                    throw new PluginLoadingError(`Unable to load plugin ${pluginPath}`);
+                }
+            }
+        }
+        return plugins;
+    }
+
     get_log_name() {
-        if (this.file_path) {
-            return path.resolve(this.file_path, `${this.timestamp}.${this.log_file_type}`); // return the filepath and the name of the file
+        if (this.hasPlugin(this.UsedPlugins, 'get_log_name')){
+            const plugin = this.plugins.find(plugin => 'get_log_name' in plugin);
+            return plugin.get_log_name();
         } else {
-            throw new PathNonExistant('File path not found'); // raise an error if file path is  null
+            if (this.file_path) {
+                return path.resolve(this.file_path, `${this.timestamp}.${this.log_file_type}`);
+            } else {
+                throw new PathNonExistant('File path not found');
+            }
         }
     }
 
-    /**
-    * @param {string} [path] - The path to be opened
-    * @throws {PathNonExistant} If the file path does not exist
-    * @description Opens json files
-    */
     load_json(path) {
+        if (this.hasPlugin(this.UsedPlugins, 'load_json')){
+            const plugin = this.plugins.find(plugin => 'load_json' in plugin);
+            return plugin.load_json();
+        }
+
         if (fs.existsSync(path)) {
             const data = fs.readFileSync(path, 'utf8');
-            this.settings = JSON.parse(data);
+            return JSON.parse(data);
         } else {
             throw new PathNonExistant('File path does not exist');
         }
     }
-    
-    /**
-     *@throws {FileNotOpen} If the log file is not open 
-     *@description Closes the current log file
-     */
+
+    hasPlugin(plugins, methodName) {
+        if (Array.isArray(plugins)) {
+            return plugins.some(plugin => methodName in plugin);
+        } else {
+            return methodName in plugins;
+        }
+    }
+
     close() {
         if (this.log_file) {
-            try {
-                this.log('info', 'Closing file');
-            } finally {
-                this.log_file.close();
-                delete Logger.open_loggers[this.log_file_name];
-                this.log_file = null;
+            if (this.hasPlugin(this.UsedPlugins, 'close')){
+                const plugin = this.plugins.find(plugin => 'close' in plugin);
+                plugin.close();
+            } else{
+                try {
+                    this.log('info', 'Closing file');
+                } finally {
+                    this.log_file.close();
+                    delete this.open_loggers[String(this.log_file_name)];
+                    this.log_file = null;
+                }
             }
+            
         } else {
             throw new FileNotOpen('Log file is not open');
         }
