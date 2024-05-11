@@ -1,4 +1,5 @@
-type PluginType = Formatter | Log | CreateLogFile | LoadPlugins | Close | LoadJson | any;
+type PluginType = Formatter | Log | CreateLogFile  | Close | LoadJson | LogFileName | any
+import {WriteStream} from 'fs'
 
 interface Plugin {
     execute(...args: any[]): any;
@@ -6,39 +7,63 @@ interface Plugin {
 
 interface Formatter extends Plugin {
     func: (...args: any[]) => any;
-    params: [level: string, message: string, timestamp: string, context?: undefined];
+    params: [
+        level: string,
+        message: string,
+        timestamp: string,
+        format: Settings['Formats'],
+        context?: undefined];
     returnType: string;
 }
 
 interface Log extends Plugin{
     func: (...args: any[]) => any;
-    params: [level: string, message: string, context?: undefined];
+    params: [
+        timestamp: string,
+        message: string,
+        LogFile: WriteStream,
+    ];
     returnType: void;
+}
+
+interface LogFileName extends Plugin{
+    func: (...args: any[]) => any;
+    params: [
+        path: string,
+        type: string];
+    returnType: string;
 }
 
 interface CreateLogFile extends Plugin{
     func: (...args: any[]) => any;
-    params: [];
-    returnType: void;
+    params: [
+            endsWith: boolean,
+            logFileName: string,
+            combineLoggers: boolean,
+            openLoggers: {},
+            logFilePath: string
+        ]
+    returnType: WriteStream;
 }
 
-interface LoadPlugins extends Plugin {
-    func: (...args: any[]) => any;
-    params: [];
-    returnType: void;
-}
 
 interface Close extends Plugin{
     func: (...args: any[]) => any;
-    params: [];
-    returnType: void;
+    params: [
+        logFile: WriteStream,
+        openloggers: {},
+        logFileName: string
+    ]
+    returnType: void
+
 }
 
 interface LoadJson {
     func: (...args: any[]) => any;
     params: [path: string];
-    returnType: void;
+    returnType: {};
 }
+
 interface Settings{
     LogLevels: {
         [key: string]: number;
@@ -48,10 +73,20 @@ interface Settings{
     };
 }
 
+interface CustomPlugin extends Plugin{
+    
+}
+
 
 export {
     PluginType,
     Plugin,
-    Settings
-
+    Settings,
+    Log,
+    CreateLogFile,
+    LoadJson,
+    Close,
+    Formatter,
+    LogFileName
 };
+// E.O.F.
