@@ -1,4 +1,4 @@
-import { LogFileName } from "../Types";
+import { LogFileName } from "../../Types";
 import * as Path from 'path'
 export class GetName implements LogFileName{
     params: [path: string,type: string];

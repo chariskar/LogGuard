@@ -73,10 +73,6 @@ interface Settings{
     };
 }
 
-interface CustomPlugin extends Plugin{
-    
-}
-
 
 export {
     PluginType,

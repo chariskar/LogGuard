@@ -1,4 +1,4 @@
-import { LoadJson } from "../Types";
+import { LoadJson } from "../../Types";
 import * as fs from 'fs'
 
 class PathNonExistant extends Error{}

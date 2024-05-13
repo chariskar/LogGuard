@@ -1,5 +1,5 @@
 import * as fs from 'fs'
-import type { CreateLogFile } from '../Types'
+import type { CreateLogFile } from '../../Types'
 class PathNonExistant extends Error {} 
 
 
