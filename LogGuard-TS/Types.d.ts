@@ -12,14 +12,14 @@ interface Formatter extends Plugin {
         message: string,
         timestamp: string,
         format: Settings['Formats'],
-        context?: undefined];
+        context?: undefined,
+    ];
     returnType: string;
 }
 
 interface Log extends Plugin{
     func: (...args: any[]) => any;
     params: [
-        timestamp: string,
         message: string,
         LogFile: WriteStream,
     ];
@@ -65,7 +65,7 @@ interface Settings{
     Formats: {
         [key: string]: string;
     };
-    Plugins:{
+    Plugins: {
         enabled: boolean;
         UsedPlugins: string[] | string;
         PluginPath:{

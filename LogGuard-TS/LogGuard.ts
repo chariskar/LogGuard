@@ -103,8 +103,8 @@ export class Logger {
 									}
 									const plugin = this.plugins.find(plugin => 'Log' in plugin)
 									plugin.execute(
-										timestamp,
 										formatted_message,
+										this.log_file,
 									)
 								}
 								if (formatted_message !== null) {
@@ -119,8 +119,8 @@ export class Logger {
 									}
 									const plugin = this.plugins.find(plugin => 'Log' in plugin)
 									plugin.execute(
-										timestamp,
 										formatted_message,
+										this.log_file
 									)
 								}
 								if (formatted_message !== null) {
@@ -177,7 +177,7 @@ export class Logger {
 						.replace('{level}', level)
 						.replace('{timestamp}', timestamp)
 						.replace('{message}', message)
-						.replace('{context}', context);
+						.replace('{context}', context)
 				} else {
 					const format_template: string = this.settings['Formats']['NonContext'];
 					formattedMessage = format_template

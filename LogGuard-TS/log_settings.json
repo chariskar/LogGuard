@@ -11,7 +11,7 @@
         "Context":"[{timestamp}] [{level}] {message} {context}"
     },
     "Plugins":{
-        "enabled": false,
+        "enabled": true ,
         "UsedPlugins": ["close","create","getname","log"],
         "PluginPath":{
             "close": "./Example-Plugins/Logic/Close.Plugin",
