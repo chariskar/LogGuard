@@ -1,6 +1,4 @@
-
-
-# TypeScript
+# Usage
 
   import * as Logger from './Logger' or import * as Logger from 'Logger' if it is installed as a module
   
@@ -9,7 +7,7 @@
   logger.log('info','hello')
 
 # Plugins
-  When calling the Logger point to a valid folder that contains the plugin files and then update the log_settings.json file accordingly to the instructions of the release.
+  When calling the Logger point to a valid folder that contains the plugin files and then update the UsedPlugins variable to contain all the plugins you will be using
 
 # Contribute
 
