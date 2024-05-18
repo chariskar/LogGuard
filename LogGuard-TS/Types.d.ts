@@ -1,4 +1,4 @@
-type PluginType = Formatter | Log | CreateLogFile  | Close | LoadJson | LogFileName | any
+type PluginType = Formatter | Log | CreateLogFile  | Close | LogFileName | any
 import {WriteStream} from 'fs'
 
 interface Plugin {
@@ -58,12 +58,6 @@ interface Close extends Plugin{
 
 }
 
-interface LoadJson {
-    func: (...args: any[]) => any;
-    params: [path: string];
-    returnType: {};
-}
-
 interface Settings{
     LogLevels: {
         [key: string]: number;
@@ -71,6 +65,13 @@ interface Settings{
     Formats: {
         [key: string]: string;
     };
+    Plugins:{
+        enabled: boolean;
+        UsedPlugins: string[] | string;
+        PluginPath:{
+            [key: string]: string;
+        }
+    }
 }
 
 
@@ -80,7 +81,6 @@ export {
     Settings,
     Log,
     CreateLogFile,
-    LoadJson,
     Close,
     Formatter,
     LogFileName

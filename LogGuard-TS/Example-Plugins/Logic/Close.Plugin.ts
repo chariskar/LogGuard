@@ -1,7 +1,7 @@
 import * as fs from 'fs'
-import type { Close } from '../Types';
+import type { Close } from '../../Types';
 class FileNotOpen extends Error{} 
-export class close implements Close{
+export default class close implements Close{
 
     func(
         logFile: fs.WriteStream | null,

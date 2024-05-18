@@ -3,7 +3,7 @@ import type { CreateLogFile } from '../../Types'
 class PathNonExistant extends Error {} 
 
 
-export class CreateLogFilePlugin implements CreateLogFile {
+export default class CreateLogFilePlugin implements CreateLogFile {
     params: [endsWith: boolean, logFileName: string, combineLoggers: boolean, openLoggers: {}, logFilePath: string];
     returnType: fs.WriteStream;
 
@@ -47,7 +47,7 @@ export class CreateLogFilePlugin implements CreateLogFile {
             }
 
         } catch(e){
-            throw new e
+            throw e
         }
     }
     execute(

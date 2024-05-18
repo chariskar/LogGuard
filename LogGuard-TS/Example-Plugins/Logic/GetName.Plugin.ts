@@ -1,6 +1,6 @@
 import { LogFileName } from "../../Types";
 import * as Path from 'path'
-export class GetName implements LogFileName{
+export default class GetName implements LogFileName{
     params: [path: string,type: string];
     returnType: string;
     func(path: string,type: string): string{
