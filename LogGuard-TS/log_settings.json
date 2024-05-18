@@ -12,12 +12,12 @@
     },
     "Plugins":{
         "enabled": false,
-        "UsedPlugins": ["close","Create","GetName","load_json","Log"],
+        "UsedPlugins": ["close","create","getname","log"],
         "PluginPath":{
             "close": "./Example-Plugins/Logic/Close.Plugin",
-            "Create": "./Example-Plugins/Logic/CreateFile.Plugin",
-            "GetName": "./Example-Plugins/Logic/GetName.Plugin",
-            "load_json": "./Example-Plugins/Logic/LoadJson.Plugin"
+            "create": "./Example-Plugins/Logic/CreateFile.Plugin",
+            "getname": "./Example-Plugins/Logic/GetName.Plugin",
+            "log":"./Example-Plugins/Logic/Log.Plugin.ts"
         } 
     }
 }
