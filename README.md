@@ -1,5 +1,3 @@
-# Logger 
-
 
 
 # TypeScript
@@ -11,7 +9,7 @@
   logger.log('info','hello')
 
 # Plugins
-  When calling the Logger point to a valid folder that contains the plugin files and then update the UsedPlugins variable to contain all the plugins you will be using
+  When calling the Logger point to a valid folder that contains the plugin files and then update the log_settings.json file accordingly to the instructions of the release.
 
 # Contribute
 
