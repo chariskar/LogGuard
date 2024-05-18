@@ -1,4 +1,4 @@
-import type { Log } from "../../Types";
+import type { Log } from "../../../Types";
 import * as fs from 'fs'
 
 export default class log implements Log {

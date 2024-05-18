@@ -1,5 +1,5 @@
 import * as fs from 'fs'
-import type { Close } from '../../Types';
+import type { Close } from '../../../Types';
 
 class FileNotOpen extends Error {}
 
