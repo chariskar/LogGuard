@@ -67,7 +67,7 @@ interface Settings{
     };
     Plugins: {
         enabled: boolean;
-        UsedPlugins: string[] | string;
+        UsedPlugins: string[];
         PluginPath:{
             [key: string]: string;
         }

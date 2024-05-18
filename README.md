@@ -1,8 +1,4 @@
-# Logger 
-
-
-
-# TypeScript
+# Usage
 
   import * as Logger from './Logger' or import * as Logger from 'Logger' if it is installed as a module
   
