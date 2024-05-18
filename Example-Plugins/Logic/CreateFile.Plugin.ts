@@ -1,11 +1,11 @@
 import * as fs from 'fs'
-import type { CreateLogFile } from '../../../Types'
+import type { CreateLogFile } from '../../Types'
 class PathNonExistant extends Error {} 
 
 
 export default class CreateLogFilePlugin implements CreateLogFile {
-    params: [endsWith: boolean, logFileName: string, combineLoggers: boolean, openLoggers: {}, logFilePath: string];
-    returnType: fs.WriteStream;
+    params: [endsWith: boolean, logFileName: string, combineLoggers: boolean, openLoggers: {}, logFilePath: string]
+    returnType: fs.WriteStream
 
     func(
         endsWith: boolean,

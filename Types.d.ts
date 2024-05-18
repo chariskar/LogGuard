@@ -2,11 +2,11 @@ type PluginType = Formatter | Log | CreateLogFile  | Close | LogFileName | any
 import {WriteStream} from 'fs'
 
 interface Plugin {
-    execute(...args: any[]): any;
+    execute(...args: any[]): any
 }
 
 interface Formatter extends Plugin {
-    func: (...args: any[]) => any;
+    func: (...args: any[]) => any
     params: [
         level: string,
         message: string,
@@ -84,5 +84,5 @@ export {
     Close,
     Formatter,
     LogFileName
-};
+}
 // E.O.F.

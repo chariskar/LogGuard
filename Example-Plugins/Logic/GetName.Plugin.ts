@@ -1,8 +1,8 @@
-import { LogFileName } from "../../../Types";
+import { LogFileName } from '../../Types'
 import * as Path from 'path'
 export default class GetName implements LogFileName{
-    params: [path: string,type: string];
-    returnType: string;
+    params: [path: string,type: string]
+    returnType: string
     func(path: string,type: string): string{
         return Path.resolve(path, `Index.${type}`) // return the filepath and the name of the file
     }
