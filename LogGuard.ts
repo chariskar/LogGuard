@@ -1,6 +1,6 @@
-import * as fs from 'fs'
 import * as path from 'path'
 import type { PluginType, Settings } from './Types'
+import * as fs from 'fs'
 
 class FileNotOpen extends Error {} 
 class PathNonExistant extends Error {} 
@@ -23,14 +23,14 @@ export class Logger {
 	private open_loggers: Record<string, fs.WriteStream> = {}
 	private settings: Settings
 	private configured_level_value: number | null
-	private file_path: string | null
+	private file_path: string | null 
 	private log_file: fs.WriteStream | null
 	private log_file_name: string | null
 	private timestamp: string | null
 	private supported_formats: string[] = ['log', 'txt']
 	private log_file_type: string
 	private settings_path: string
-	private pluginsPath: string | null | { [key: string]: string }
+	private pluginsPath: string | null | Record<string,string>
 	private plugins: PluginType[] | null
 	public UsedPlugins: string[]
 
@@ -231,11 +231,14 @@ export class Logger {
 		
 			try {
 				if (logFileName) {
+					
 					if (!fs.existsSync(logFileName)) {
+
 					// Create the log file if it doesn't exist
 						fs.writeFileSync(logFileName, '')
 						// Add a starting message if loggers are combined
 						if (combineLoggers) {
+
 							this.log('info', 'Starting')
 						}
 					}
@@ -361,15 +364,20 @@ export class Logger {
      * @description Closes the current log file
      */
 	public close(): void {
+
 		if (this.log_file) {
+
 			if (this.hasPlugin('close')) {
+
 				if (!this.plugins) {
+
 					throw new Error('You have a plugin but the plugins var is null')
 				}
 
 				const plugin = this.plugins.find(plugin => 'close' in plugin)
 				plugin.execute(this.log_file, this.open_loggers, this.log_file_name)
 			} else {
+
 				try {
 					this.log('info', 'Closing file')
 				} finally {
@@ -379,6 +387,7 @@ export class Logger {
 				}
 			}
 		} else {
+
 			throw new FileNotOpen('Log file is not open')
 		}
 	}

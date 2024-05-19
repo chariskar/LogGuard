@@ -68,9 +68,7 @@ interface Settings{
     Plugins: {
         enabled: boolean;
         UsedPlugins: string[];
-        PluginPath:{
-            [key: string]: string;
-        }
+        PluginPath:Record<string,string>
     }
 }
 
