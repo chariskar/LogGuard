@@ -1,9 +1,13 @@
+// imports
 import * as path from 'path'
 import type { PluginType, Settings, StartupPlugin} from './Types'
 import * as fs from 'fs'
 
+// errors
 class FileNotOpen extends Error {} 
+
 class PathNonExistant extends Error {} 
+
 class PluginLoadingError extends Error {}
 
 /**
@@ -35,7 +39,6 @@ export class Logger {
 	private UsedPlugins: string[]
 	private StartupPluginsPath: Record<string,string>
 	private UsedStartupPlugins: string[]
-	private StartupPlugins: StartupPlugin[]
 
 	constructor(
 		output_dir: string = 'logs',
@@ -52,24 +55,35 @@ export class Logger {
 
 
 			if (!this.supported_formats.includes(log_file_type)) {
+
 				throw new Error('Log file type isn\'t supported')
 			}
 			this.log_file_type = log_file_type
+
 			this.file_path = output_dir === '.' ? path.resolve() : path.resolve(output_dir)
+
 			this.settings_path = settings_path
-			this.settings = this.load_json(this.settings_path)
+
+			this.settings = this.load_settings(this.settings_path)
 			
 			if (this.settings) {
 				this.configured_level_value = this.settings.LogLevels[this.loglevel]
 			}
 
 			if (this.settings.Plugins.enabled) {
+
 				this.UsedPlugins = this.settings.Plugins.UsedPlugins
+
 				this.pluginsPath = this.settings.Plugins.PluginPath
+
 				if (this.settings.Plugins.function.enabled){
+
 					this.StartupPluginsPath = this.settings.Plugins.function.Path
+
 					this.UsedStartupPlugins = this.settings.Plugins.function.UsedPlugins
+
 					this.loadStartupPlugins()
+
 				}
 				this.plugins = this.loadPlugins()
 			}
@@ -92,7 +106,7 @@ export class Logger {
 		message: string,
 		context?: undefined
 	): void {
-		const timestamp: string = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '')
+		const timestamp: string = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '');
 		level = level.toUpperCase() // make the level upper case if it isn't
 
 		if (this.log_file) { // if the log file exists
@@ -109,7 +123,7 @@ export class Logger {
 									if (!this.plugins) {
 										throw new Error('You have a plugin but the plugins var is null')
 									}
-									const plugin = this.plugins.find(plugin => 'Log' in plugin)
+									const plugin = this.plugins.find(plugin => 'log' in plugin)
 									plugin.execute(
 										formatted_message,
 										this.log_file,
@@ -173,9 +187,15 @@ export class Logger {
 				if (!this.plugins) {
 					throw new Error('You have a plugin but the plugins var is null')
 				}
-				const plugin = this.plugins.find(plugin => 'Formatter' in plugin)
+				const plugin = this.plugins.find(plugin => 'formatter' in plugin)
 				if (plugin) {
-					formattedMessage = plugin.execute(level, message, timestamp, this.settings['Formats'], context)
+					formattedMessage = plugin.execute(
+						level,
+						message,
+						timestamp, 
+						this.settings['Formats'], 
+						context
+					)
 				}
 			} else {
 				if (context) {
@@ -208,7 +228,9 @@ export class Logger {
      * @throws {PathNonExistant} If the path is null.
      * @description Create the log file in the specified directory.
      */
-	private create_log_file(): void {
+	private create_log_file(
+
+	): void {
 
 		// Determine if the output directory ends with ".log"
 		const endsWith = this.file_path && this.file_path.endsWith('.log')
@@ -283,7 +305,9 @@ export class Logger {
      * @description Get the full path of the log file.
      * @returns {string} The full log file path.
      */
-	private get_log_name(): string {
+	private get_log_name(
+
+	): string {
 		if (this.hasPlugin('GetName')) {
 			if (!this.plugins) {
 				throw new Error('You have a plugin but the plugins var is null')
@@ -304,7 +328,9 @@ export class Logger {
     * @throws {PathNonExistant} If the file path does not exist
     * @description Opens json files
     */
-	private load_json(path: string) {
+	private load_settings(
+		path: string
+	): Settings {
 		if (fs.existsSync(path)) {
 			const data: string = fs.readFileSync(path, 'utf8')
 			return JSON.parse(data)
@@ -318,7 +344,9 @@ export class Logger {
 	 * @returns {boolean | null} - Returns true if the plugin exists, false if it doesn't, and null if plugins aren't defined and it's called
 	 * @description Type guard to check if the plugin or plugins have the specified method.
 	 */
-	private hasPlugin(methodName: string): boolean | null {
+	private hasPlugin(
+		methodName: string
+	): boolean | null {
 		methodName = methodName.toLowerCase()
 		if (this.plugins) {
 			if (this.UsedPlugins.find(methodName => methodName in this.UsedPlugins)) {
@@ -333,7 +361,9 @@ export class Logger {
 	 * @returns {Plugin[]} - Returns the Plugins
 	 * @description - Loads all of the plugins from the specified path
 	 */
-	private loadPlugins(): PluginType[] {
+	private loadPlugins(
+
+	): PluginType[] {
 		if (!this.pluginsPath || typeof this.pluginsPath !== 'object') {
 			throw new PluginLoadingError('Invalid Plugin Path')
 		}
@@ -368,7 +398,9 @@ export class Logger {
 		return plugins
 	}
 
-	private loadStartupPlugins(): StartupPlugin[]{
+	private loadStartupPlugins(
+
+	): void{
 		if (!this.pluginsPath || typeof this.pluginsPath !== 'object') {
 			throw new PluginLoadingError('Invalid Plugin Path')
 		}
@@ -387,28 +419,33 @@ export class Logger {
 
 				if (typeof PluginClass === 'function') {
 					const pluginInstance = new PluginClass()
+
 					if ('execute' in pluginInstance) {
+
 						const plugin = new pluginInstance
 						plugin.execute(this)
 					} else {
+
 						throw new PluginLoadingError(`Plugin ${pluginName} does not have an 'execute' method`)
 					}
 				} else {
+
 					throw new PluginLoadingError(`Plugin ${pluginName} is not a valid class`)
 				}
 			} catch (error) {
+
 				throw new PluginLoadingError(`Failed to load plugin ${pluginName}: ${error.message}`)
 			}
 		}
-
-		return plugins
 	}
 	
 	/**
      * @throws {FileNotOpen} If the log file is not open 
      * @description Closes the current log file
      */
-	public close(): void {
+	public close(
+
+	): void {
 
 		if (this.log_file) {
 
@@ -420,12 +457,15 @@ export class Logger {
 				}
 
 				const plugin = this.plugins.find(plugin => 'close' in plugin)
+
 				plugin.execute(this.log_file, this.open_loggers, this.log_file_name)
 			} else {
 
 				try {
+
 					this.log('info', 'Closing file')
 				} finally {
+					
 					this.log_file.close()
 					delete this.open_loggers[String(this.log_file_name)]
 					this.log_file = null

@@ -1,25 +1,19 @@
 {
-  "name": "logguard-ts",
-  "module": "LogGuard.ts",
-  "type": "module",
-  "devDependencies": {
-    "@types/bun": "latest",
-    "@typescript-eslint/eslint-plugin": "^7.9.0",
-    "@typescript-eslint/parser": "^7.9.0",
-    "eslint": "latest",
-    "eslint-plugin-jsdoc": "latest",
-    "jdoc": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  },
+  "name": "logger",
+  "version": "1.0.0",
+  "description": "import * as Logger from './Logger' or import * as Logger from 'Logger' if it is installed as a module",
+  "main": "index.js",
   "scripts": {
-    "lint": "eslint \"**/*.ts\""
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "eslintIgnore": [
-    "node_modules/",
-    "dist/"
-  ],
-  "version": "1.0.0"
-
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.10.0",
+    "@typescript-eslint/parser": "^7.10.0",
+    "eslint": "^8.57.0",
+    "npm": "^10.8.0",
+    "typescript-eslint": "^7.10.0"
+  }
 }

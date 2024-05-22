@@ -96,7 +96,7 @@ declare interface LoggerInstance {
     Formatter(level: string, message: string, timestamp: string, context?: any): string;
     create_log_file(): void;
     get_log_name(): string;
-    load_json(path: string): Settings;
+    load_settings(path: string): Settings;
     hasPlugins(methodName: string): boolean | null;
     loadPlugins(): PluginType[];
     close(): void;
