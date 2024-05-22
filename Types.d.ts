@@ -69,7 +69,7 @@ declare interface Settings{
         enabled: boolean;
         UsedPlugins: string[];
         PluginPath:Record<string,string>,
-        function: {
+        startup: {
             enabled: boolean,
             UsedPlugins: string[],  
             Path: Record<string,string>

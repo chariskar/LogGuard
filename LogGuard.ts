@@ -76,11 +76,11 @@ export class Logger {
 
 				this.pluginsPath = this.settings.Plugins.PluginPath
 
-				if (this.settings.Plugins.function.enabled){
+				if (this.settings.Plugins.startup.enabled){
 
-					this.StartupPluginsPath = this.settings.Plugins.function.Path
+					this.StartupPluginsPath = this.settings.Plugins.startup.Path
 
-					this.UsedStartupPlugins = this.settings.Plugins.function.UsedPlugins
+					this.UsedStartupPlugins = this.settings.Plugins.startup.UsedPlugins
 
 					this.loadStartupPlugins()
 
@@ -381,8 +381,11 @@ export class Logger {
 				const PluginClass = pluginModule.default
 
 				if (typeof PluginClass === 'function') {
+
 					const pluginInstance = new PluginClass()
+
 					if ('execute' in pluginInstance) {
+
 						plugins.push(pluginInstance)
 					} else {
 						throw new PluginLoadingError(`Plugin ${pluginName} does not have an 'execute' method`)
@@ -399,7 +402,6 @@ export class Logger {
 	}
 
 	private loadStartupPlugins(
-
 	): void{
 		if (!this.pluginsPath || typeof this.pluginsPath !== 'object') {
 			throw new PluginLoadingError('Invalid Plugin Path')
