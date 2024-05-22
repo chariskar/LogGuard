@@ -1,11 +1,11 @@
-type PluginType = Formatter | Log | CreateLogFile  | Close | LogFileName | any
+declare type PluginType = Formatter | Log | CreateLogFile  | Close | LogFileName | any
 import {WriteStream} from 'fs'
 
-interface Plugin {
+declare interface Plugin {
     execute(...args: any[]): any
 }
 
-interface Formatter extends Plugin {
+declare interface Formatter extends Plugin {
     func: (...args: any[]) => any
     params: [
         level: string,
@@ -17,7 +17,7 @@ interface Formatter extends Plugin {
     returnType: string;
 }
 
-interface Log extends Plugin{
+declare interface Log extends Plugin{
     func: (...args: any[]) => any;
     params: [
         message: string,
@@ -26,7 +26,7 @@ interface Log extends Plugin{
     returnType: void;
 }
 
-interface LogFileName extends Plugin{
+declare interface LogFileName extends Plugin{
     func: (...args: any[]) => any;
     params: [
         path: string,
@@ -34,7 +34,7 @@ interface LogFileName extends Plugin{
     returnType: string;
 }
 
-interface CreateLogFile extends Plugin{
+declare interface CreateLogFile extends Plugin{
     func: (...args: any[]) => any;
     params: [
             endsWith: boolean,
@@ -47,7 +47,7 @@ interface CreateLogFile extends Plugin{
 }
 
 
-interface Close extends Plugin{
+declare interface Close extends Plugin{
     func: (...args: any[]) => any;
     params: [
         logFile: WriteStream,
@@ -58,7 +58,7 @@ interface Close extends Plugin{
 
 }
 
-interface Settings{
+declare interface Settings{
     LogLevels: {
         [key: string]: number;
     };
@@ -68,10 +68,45 @@ interface Settings{
     Plugins: {
         enabled: boolean;
         UsedPlugins: string[];
-        PluginPath:Record<string,string>
+        PluginPath:Record<string,string>,
+        function: {
+            enabled: boolean,
+            UsedPlugins: string[],  
+            Path: Record<string,string>
+        }
     }
 }
 
+declare interface LoggerInstance {
+    loglevel: string;
+    open_loggers: Record<string, fs.WriteStream>;
+    settings: Settings;
+    configured_level_value: number | null;
+    file_path: string | null;
+    log_file: fs.WriteStream | null;
+    log_file_name: string | null;
+    timestamp: string | null;
+    supported_formats: string[];
+    log_file_type: string;
+    settings_path: string;
+    pluginsPath: string | null | Record<string, string>;
+    plugins: PluginType[] | null;
+    UsedPlugins: string[];
+    log(level: string, message: string, context?: any): void;
+    Formatter(level: string, message: string, timestamp: string, context?: any): string;
+    create_log_file(): void;
+    get_log_name(): string;
+    load_json(path: string): Settings;
+    hasPlugins(methodName: string): boolean | null;
+    loadPlugins(): PluginType[];
+    close(): void;
+}
+
+declare interface StartupPlugin extends Plugin{
+    func: (...args: any[]) => any;
+    params: [instance: LoggerInstance]
+    returnType: void
+}
 
 export {
     PluginType,
@@ -81,6 +116,8 @@ export {
     CreateLogFile,
     Close,
     Formatter,
-    LogFileName
+    LogFileName,
+    LoggerInstance,
+    StartupPlugin
 }
 // E.O.F.

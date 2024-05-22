@@ -12,12 +12,26 @@
     },
     "Plugins":{
         "enabled": true ,
-        "UsedPlugins": ["close","create","getname","log"],
-        "PluginPath":{
+        "UsedPlugins": [
+            "close",
+            "create",
+            "getname",
+            "log"
+        ],
+        "PluginPath": {
             "close": "./Example-Plugins/Logic/Close.Plugin",
             "create": "./Example-Plugins/Logic/CreateFile.Plugin",
             "getname": "./Example-Plugins/Logic/GetName.Plugin",
             "log":"./Example-Plugins/Logic/Log.Plugin.ts"
-        } 
+        },
+        "function": {
+            "enabled": true,
+            "UsedPlugins": [
+                "your-example-name"
+            ],
+            "Path":{
+                "your-example-name":"./Example-Plugins/Function/YourExampleName.Plugin.ts"
+            }
+        }
     }
 }

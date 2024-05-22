@@ -1,5 +1,5 @@
 import * as path from 'path'
-import type { PluginType, Settings } from './Types'
+import type { PluginType, Settings, StartupPlugin} from './Types'
 import * as fs from 'fs'
 
 class FileNotOpen extends Error {} 
@@ -32,7 +32,10 @@ export class Logger {
 	private settings_path: string
 	private pluginsPath: string | null | Record<string,string>
 	private plugins: PluginType[] | null
-	public UsedPlugins: string[]
+	private UsedPlugins: string[]
+	private StartupPluginsPath: Record<string,string>
+	private UsedStartupPlugins: string[]
+	private StartupPlugins: StartupPlugin[]
 
 	constructor(
 		output_dir: string = 'logs',
@@ -46,6 +49,7 @@ export class Logger {
 			this.configured_level_value = null
 			this.log_file = null
 			this.log_file_name = null
+
 
 			if (!this.supported_formats.includes(log_file_type)) {
 				throw new Error('Log file type isn\'t supported')
@@ -62,6 +66,11 @@ export class Logger {
 			if (this.settings.Plugins.enabled) {
 				this.UsedPlugins = this.settings.Plugins.UsedPlugins
 				this.pluginsPath = this.settings.Plugins.PluginPath
+				if (this.settings.Plugins.function.enabled){
+					this.StartupPluginsPath = this.settings.Plugins.function.Path
+					this.UsedStartupPlugins = this.settings.Plugins.function.UsedPlugins
+					this.loadStartupPlugins()
+				}
 				this.plugins = this.loadPlugins()
 			}
 
@@ -279,7 +288,7 @@ export class Logger {
 			if (!this.plugins) {
 				throw new Error('You have a plugin but the plugins var is null')
 			}
-			const plugin = this.plugins.find(plugin => 'GetName' in plugin)
+			const plugin = this.plugins.find(plugin => 'getname' in plugin)
 			return plugin.execute(this.file_path, this.log_file_name)
 		} else {
 			if (this.file_path) {
@@ -345,6 +354,42 @@ export class Logger {
 					const pluginInstance = new PluginClass()
 					if ('execute' in pluginInstance) {
 						plugins.push(pluginInstance)
+					} else {
+						throw new PluginLoadingError(`Plugin ${pluginName} does not have an 'execute' method`)
+					}
+				} else {
+					throw new PluginLoadingError(`Plugin ${pluginName} is not a valid class`)
+				}
+			} catch (error) {
+				throw new PluginLoadingError(`Failed to load plugin ${pluginName}: ${error.message}`)
+			}
+		}
+
+		return plugins
+	}
+
+	private loadStartupPlugins(): StartupPlugin[]{
+		if (!this.pluginsPath || typeof this.pluginsPath !== 'object') {
+			throw new PluginLoadingError('Invalid Plugin Path')
+		}
+
+		const plugins: StartupPlugin[] = []
+
+		for (let pluginName of this.UsedStartupPlugins) {
+			pluginName = pluginName as string
+			try {
+				const pluginPath = this.StartupPluginsPath[pluginName]
+				if (!pluginPath) {
+					throw new PluginLoadingError(`Path for plugin ${pluginName} is not defined`)
+				}
+				const pluginModule = require(pluginPath)
+				const PluginClass = pluginModule.default
+
+				if (typeof PluginClass === 'function') {
+					const pluginInstance = new PluginClass()
+					if ('execute' in pluginInstance) {
+						const plugin = new pluginInstance
+						plugin.execute(this)
 					} else {
 						throw new PluginLoadingError(`Plugin ${pluginName} does not have an 'execute' method`)
 					}
