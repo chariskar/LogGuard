@@ -20,3 +20,4 @@
 # Instalation
 
   I decided to not put the code on any package manager (they did not want to work for some reason) so to install them you just grab the files you want for example the logger file and the log_settings.json file or the styling files if you like
+

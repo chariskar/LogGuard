@@ -2,13 +2,9 @@
   "name": "logger",
   "version": "1.0.0",
   "description": "import * as Logger from './Logger' or import * as Logger from 'Logger' if it is installed as a module",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Charis Karametos",
+  "license": "MIT",
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^7.10.0",
     "@typescript-eslint/parser": "^7.10.0",

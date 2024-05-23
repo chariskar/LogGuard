@@ -1,6 +1,6 @@
 // imports
 import * as path from 'path'
-import type { PluginType, Settings, StartupPlugin} from './Types'
+import type { PluginType, Settings} from './Types'
 import * as fs from 'fs'
 
 // errors
@@ -9,6 +9,7 @@ class FileNotOpen extends Error {}
 class PathNonExistant extends Error {} 
 
 class PluginLoadingError extends Error {}
+
 
 /**
  * @param {string} [output_dir='logs'] - The directory where log files will be stored.
@@ -403,11 +404,10 @@ export class Logger {
 
 	private loadStartupPlugins(
 	): void{
+
 		if (!this.pluginsPath || typeof this.pluginsPath !== 'object') {
 			throw new PluginLoadingError('Invalid Plugin Path')
 		}
-
-		const plugins: StartupPlugin[] = []
 
 		for (let pluginName of this.UsedStartupPlugins) {
 			pluginName = pluginName as string
@@ -458,24 +458,34 @@ export class Logger {
 					throw new Error('You have a plugin but the plugins var is null')
 				}
 
-				const plugin = this.plugins.find(plugin => 'close' in plugin)
+				const plugin = this.plugins.find(
+					plugin => 'close' in plugin
+				)
 
-				plugin.execute(this.log_file, this.open_loggers, this.log_file_name)
+				plugin.execute(
+					this.log_file, 
+					this.open_loggers, 
+					this.log_file_name
+				)
 			} else {
 
 				try {
 
 					this.log('info', 'Closing file')
+
 				} finally {
 					
 					this.log_file.close()
+
 					delete this.open_loggers[String(this.log_file_name)]
+
 					this.log_file = null
 				}
 			}
 		} else {
 
 			throw new FileNotOpen('Log file is not open')
+
 		}
 	}
 }

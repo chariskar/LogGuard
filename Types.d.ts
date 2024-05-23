@@ -99,14 +99,10 @@ declare interface LoggerInstance {
     load_settings(path: string): Settings;
     hasPlugins(methodName: string): boolean | null;
     loadPlugins(): PluginType[];
+    loadStartupPlugins(): void;
     close(): void;
 }
 
-declare interface StartupPlugin extends Plugin{
-    func: (...args: any[]) => any;
-    params: [instance: LoggerInstance]
-    returnType: void
-}
 
 export {
     PluginType,
@@ -118,6 +114,7 @@ export {
     Formatter,
     LogFileName,
     LoggerInstance,
-    StartupPlugin
+    StartupPlugin,
+    LogFile
 }
 // E.O.F.
