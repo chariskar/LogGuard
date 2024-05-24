@@ -1,18 +1,32 @@
 {
     "LogLevels": {
-        "INFO": 1,
-        "DEBUG": 2,
-        "WARNING": 3,
-        "ERROR": 4,
-        "CRITICAL": 5
+        "INFO": {
+            "number":1,
+            "color": "green"
+        },
+        "DEBUG": {
+            "number":2,
+            "color": "blue"
+        },
+        "WARNING": {
+            "number":3,
+            "color": "orange"
+        },
+        "ERROR": {
+            "number":4,
+            "color": "red"
+        },
+        "CRITICAL": {
+            "number":5,
+            "color": "cherry-red"
+        }
     },
     "Formats":{
         "NonContext": "[{timestamp}] [{level}] {message}  ",
         "Context":"[{timestamp}] [{level}] {message} {context}"
     },
     "Plugins":{
-
-        "enabled": true ,
+        "enabled": false ,
         "UsedPlugins": [
             "close",
             "create",
@@ -21,22 +35,17 @@
         ],
 
         "PluginPath": {
-
             "close": "./Example-Plugins/Logic/Close.Plugin",
             "create": "./Example-Plugins/Logic/CreateFile.Plugin",
             "getname": "./Example-Plugins/Logic/GetName.Plugin",
             "log":"./Example-Plugins/Logic/Log.Plugin.ts"
-
         },
 
         "startup": {
-
             "enabled": false,
-
             "UsedPlugins": [
                 "your-example-name"
             ],
-
             "Path":{
                 "your-example-name":"./Example-Plugins/Function/YourExampleName.Plugin.ts"
             }

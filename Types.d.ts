@@ -60,7 +60,10 @@ declare interface Close extends Plugin{
 
 declare interface Settings{
     LogLevels: {
-        [key: string]: number;
+        [key: string]: {
+            number: Record<string,number>,
+            color: Record<string,string>
+        }
     };
     Formats: {
         [key: string]: string;

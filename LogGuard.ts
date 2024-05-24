@@ -42,58 +42,56 @@ export class Logger {
 	private UsedStartupPlugins: string[]
 
 	constructor(
-		output_dir: string = 'logs',
-		log_file_type: string = 'log',
-		settings_path: string = 'log_settings.json',
-		LogLevel: string = 'INFO'
-	) {
-		try {
-			this.loglevel = LogLevel.toUpperCase()
-			this.timestamp = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '')
-			this.configured_level_value = null
-			this.log_file = null
-			this.log_file_name = null
+        output_dir: string = 'logs',
+        log_file_type: string = 'log',
+        settings_path: string = 'log_settings.json',
+        LogLevel: string = 'INFO'
+    ) {
+        try {
+            this.loglevel = LogLevel.toUpperCase();
+            this.timestamp = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '');
+            this.configured_level_value = null;
+            this.log_file = null;
+            this.log_file_name = null;
 
+            if (!this.supported_formats.includes(log_file_type)) {
+                throw new Error('Log file type isn\'t supported');
+            }
+            this.log_file_type = log_file_type;
 
-			if (!this.supported_formats.includes(log_file_type)) {
+            this.file_path = output_dir === '.' ? path.resolve() : path.resolve(output_dir);
+            this.settings_path = settings_path;
+            this.settings = this.load_settings(this.settings_path);
 
-				throw new Error('Log file type isn\'t supported')
-			}
-			this.log_file_type = log_file_type
+            if (this.settings) {
+                const logLevelSettings = this.settings.LogLevels[this.loglevel];
 
-			this.file_path = output_dir === '.' ? path.resolve() : path.resolve(output_dir)
+                if (!logLevelSettings || typeof logLevelSettings.number !== 'number') {
+                    throw new Error(`Log level ${this.loglevel} is not defined in the settings or 'number' is not a number.`);
+                }
+                this.configured_level_value = logLevelSettings.number;
+            }
 
-			this.settings_path = settings_path
+            if (this.settings.Plugins.enabled) {
+                this.UsedPlugins = this.settings.Plugins.UsedPlugins;
+                this.pluginsPath = this.settings.Plugins.PluginPath;
 
-			this.settings = this.load_settings(this.settings_path)
-			
-			if (this.settings) {
-				this.configured_level_value = this.settings.LogLevels[this.loglevel]
-			}
+                if (this.settings.Plugins.startup.enabled) {
+                    this.StartupPluginsPath = this.settings.Plugins.startup.Path;
+                    this.UsedStartupPlugins = this.settings.Plugins.startup.UsedPlugins;
+                    this.loadStartupPlugins();
+                }
+                this.plugins = this.loadPlugins();
+            }
 
-			if (this.settings.Plugins.enabled) {
-
-				this.UsedPlugins = this.settings.Plugins.UsedPlugins
-
-				this.pluginsPath = this.settings.Plugins.PluginPath
-
-				if (this.settings.Plugins.startup.enabled){
-
-					this.StartupPluginsPath = this.settings.Plugins.startup.Path
-
-					this.UsedStartupPlugins = this.settings.Plugins.startup.UsedPlugins
-
-					this.loadStartupPlugins()
-
-				}
-				this.plugins = this.loadPlugins()
-			}
-
-			this.create_log_file()
-		} catch (e) {
-			throw e
-		}
-	}
+            this.create_log_file();
+        } catch (e) {
+            throw e;
+        }
+    }
+	
+ 
+	
 
 	/**
      * @param {string} [level] - The log level (e.g., 'INFO', 'DEBUG').
@@ -102,69 +100,41 @@ export class Logger {
      * @throws {FileNotOpen} If the settings or the Log file isnt open.
      * @description Logs the message to the log file
      */
-	public log(
-		level: string,
-		message: string,
-		context?: undefined
-	): void {
-		const timestamp: string = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '');
-		level = level.toUpperCase() // make the level upper case if it isn't
+	public log(level: string, message: string, context?: any): void {
+        try {
+            if (!this.settings || !this.settings.LogLevels) {
+                throw new Error("Settings or LogLevels are not properly loaded.");
+            }
+            const logLevelSettings = this.settings.LogLevels[level.toUpperCase()];
+            if (!logLevelSettings) {
+                throw new Error(`Log level ${level} is not defined in the settings.`);
+            }
 
-		if (this.log_file) { // if the log file exists
-			if (this.settings) { // if the self.settings variable is not null
-				const log_level_value: number = this.settings['LogLevels'][level]
+            if (typeof logLevelSettings.number !== 'number') {
+                throw new Error(`Log level ${level} does not have a valid number setting.`);
+            }
+            if (logLevelSettings.number < (this.configured_level_value || 0)) {
+                return; // Don't log if the message level is lower than the configured level
+            }
 
-				if (log_level_value && this.configured_level_value) {
-					// check that the configured log level is lower than the given log level
-					if (log_level_value >= this.configured_level_value) {
-						if (timestamp) {
-							if (context) {
-								const formatted_message: string = this.Formatter(level, message, timestamp, context)
-								if (this.hasPlugin('Log')) {
-									if (!this.plugins) {
-										throw new Error('You have a plugin but the plugins var is null')
-									}
-									const plugin = this.plugins.find(plugin => 'log' in plugin)
-									plugin.execute(
-										formatted_message,
-										this.log_file,
-									)
-								}
-								if (formatted_message !== null) {
-									this.log_file.write(formatted_message)
-									
-								}
-							} else {
-								const formatted_message: string = this.Formatter(level, message, timestamp)
-								if (this.hasPlugin('Log')) {
-									if (!this.plugins) {
-										throw new Error('You have a plugin but the plugins var is null')
-									}
-									const plugin = this.plugins.find(plugin => 'Log' in plugin)
-									plugin.execute(
-										formatted_message,
-										this.log_file
-									)
-								}
-								if (formatted_message !== null) {
-									this.log_file.write(formatted_message)
-									
-								}
-							}
-						}
-					}
-				} else {
-					// Log level is lower than configured level, do nothing
-				}
-			} else {
-				throw new FileNotOpen('Settings file is not open')
-			}
-		} else {
-			throw new FileNotOpen('Log file is not open')
-		}
-		
-		
-	}
+            const timestamp = new Date().toISOString().replace(/:/g, '-').replace(/T/, '_').replace(/\..+/, '');
+            const Message = this.Formatter(
+				level,
+				message,
+				timestamp,
+				context
+			)
+
+            if (this.log_file) {
+                fs.appendFileSync(this.log_file.path,Message + '\n'); // Use .path of the WriteStream
+            } else {
+                throw new Error("Log file is not created.");
+            }
+        } catch (error) {
+            throw error;
+        }
+    }
+	
 
 	/**
     * @param {string} [level] -The severity level.
@@ -217,7 +187,7 @@ export class Logger {
 			}
 	
 			if (formattedMessage !== undefined) {
-				return formattedMessage + '\n'
+				return formattedMessage
 			}
 		} else {
 			throw new FileNotOpen('Settings file is not open')
