@@ -1,6 +1,6 @@
 {
   "name": "logger",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "import * as Logger from './Logger' or import * as Logger from 'Logger' if it is installed as a module",
   "keywords": [],
   "author": "Charis Karametos",
