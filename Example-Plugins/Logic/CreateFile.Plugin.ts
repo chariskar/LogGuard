@@ -1,17 +1,18 @@
+/* eslint-disable no-useless-catch */
 import * as fs from 'fs'
 import type { CreateLogFile } from '../../Types'
 class PathNonExistant extends Error {} 
 
 
 export default class CreateLogFilePlugin implements CreateLogFile {
-    params: [endsWith: boolean, logFileName: string, combineLoggers: boolean, openLoggers: {}, logFilePath: string]
+    params: [endsWith: boolean, logFileName: string, combineLoggers: boolean, openLoggers: object, logFilePath: string]
     returnType: fs.WriteStream
 
     func(
         endsWith: boolean,
         logFileName: string,
         combineLoggers: boolean,
-        openLoggers: {},
+        openLoggers: object,
         logFilePath: string
     ): fs.WriteStream{
         if (logFilePath && !endsWith) {
@@ -54,10 +55,10 @@ export default class CreateLogFilePlugin implements CreateLogFile {
         endsWith: boolean,
         logFileName: string,
         combineLoggers: boolean,
-        openLoggers: {},
+        openLoggers: object,
         logFilePath: string
-    ) {
-       this.func(
+    ): fs.WriteStream {
+       return this.func(
         endsWith,
         logFileName,
         combineLoggers,

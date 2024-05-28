@@ -4,7 +4,7 @@ import type { Close } from '../../Types'
 class FileNotOpen extends Error {}
 
 export default class ClosePlugin implements Close {
-    params: [logFile: fs.WriteStream, openloggers: {}, logFileName: string]
+    params: [logFile: fs.WriteStream, openloggers: object, logFileName: string]
     returnType: void
     func(logFile: fs.WriteStream | null, openloggers: Record<string, fs.WriteStream>, logFileName: string): void {
         if (!logFile) {
