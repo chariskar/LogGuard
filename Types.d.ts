@@ -40,7 +40,7 @@ declare interface CreateLogFile extends Plugin{
             endsWith: boolean,
             logFileName: string,
             combineLoggers: boolean,
-            openLoggers: {},
+            openLoggers: object,
             logFilePath: string
         ]
     returnType: WriteStream;

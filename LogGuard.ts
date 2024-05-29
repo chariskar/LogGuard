@@ -387,7 +387,7 @@ export class Logger {
                 const PluginClass = pluginModule.default
 
                 if (typeof PluginClass === 'function') {
-                    const pluginInstance = new PluginClass()
+                    const pluginInstance = new PluginClass(this)
 
                     if ('execute' in pluginInstance) {
 
@@ -415,11 +415,8 @@ export class Logger {
     public close(): void {
 
         if (this.log_file) {
-
             if (this.hasPlugin('close')) {
-
                 if (!this.plugins) {
-
                     throw new Error('You have a plugin but the plugins var is null')
                 }
 
@@ -435,17 +432,11 @@ export class Logger {
                     )
                 }
             } else {
-
                 try {
-
                     this.log('info', 'Closing file')
-
                 } finally {
-
                     this.log_file.close()
-
                     delete this.open_loggers[String(this.log_file_name)]
-
                     this.log_file = null
                 }
             }
