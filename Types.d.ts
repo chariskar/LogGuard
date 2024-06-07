@@ -82,11 +82,11 @@ declare interface Settings{
 
 declare interface LoggerInstance {
     loglevel: string;
-    open_loggers: Record<string, fs.WriteStream>;
+    open_loggers: Record<string, WriteStream>;
     settings: Settings;
     configured_level_value: number | null;
     file_path: string | null;
-    log_file: fs.WriteStream | null;
+    log_file: WriteStream | null;
     log_file_name: string | null;
     timestamp: string | null;
     supported_formats: string[];
@@ -117,7 +117,6 @@ export {
     Formatter,
     LogFileName,
     LoggerInstance,
-    StartupPlugin,
-    LogFile
+
 }
 // E.O.F.
